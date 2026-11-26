@@ -28,7 +28,7 @@ class UserAccessController extends Controller
             'direct_permissions' => $user->getDirectPermissions()->pluck('name')->values(),
             'available_roles' => $request->user()->can('users.assign-roles')
                 ? Role::query()->with('permissions')->where('guard_name', 'web')->orderBy('name')->get()
-                    ->filter(fn (Role $role): bool => $user->hasRole($role->name) || $role->permissions->pluck('name')->diff($request->user()->getAllPermissions()->pluck('name'))->isEmpty())
+                    ->filter(fn (Role $role): bool => $user->hasRole($role->name) || ($role->name === 'admin' && $request->user()->can('users.assign-admin-role')) || $role->permissions->pluck('name')->diff($request->user()->getAllPermissions()->pluck('name'))->isEmpty())
                     ->map(fn (Role $role): array => ['id' => $role->id, 'name' => $role->name])
                     ->values()
                 : [],
@@ -62,7 +62,7 @@ class UserAccessController extends Controller
 
         $actorPermissions = $request->user()->getAllPermissions()->pluck('name');
         $newRolePermissions = $roles
-            ->reject(fn (Role $role): bool => $user->hasRole($role->name))
+            ->reject(fn (Role $role): bool => $user->hasRole($role->name) || ($role->name === 'admin' && $request->user()->can('users.assign-admin-role')))
             ->flatMap(fn (Role $role) => $role->permissions()->pluck('name'))
             ->unique();
 
