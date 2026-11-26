@@ -18,25 +18,12 @@ export default function UserAccessModal({ user, permissions: actorPermissions = 
     useEffect(() => {
         async function loadAccess() {
             try {
-                const requests = [axios.get(`/api/users/${user.id}/access`)];
-                if (canAssignRoles) requests.push(axios.get('/api/roles'));
-                if (canAssignPermissions) requests.push(axios.get('/api/permissions'));
+                const { data } = await axios.get(`/api/users/${user.id}/access`);
 
-                const responses = await Promise.all(requests);
-                const access = responses[0].data;
-                let index = 1;
-
-                setSelectedRoles(access.roles || []);
-                setSelectedPermissions(access.direct_permissions || []);
-
-                if (canAssignRoles) {
-                    setRoles(responses[index].data.data || []);
-                    index += 1;
-                }
-
-                if (canAssignPermissions) {
-                    setPermissionCatalog(responses[index].data.data || []);
-                }
+                setSelectedRoles(data.roles || []);
+                setSelectedPermissions(data.direct_permissions || []);
+                setRoles(data.available_roles || []);
+                setPermissionCatalog(data.available_permissions || []);
             } catch (requestError) {
                 setError(requestError.response?.data?.message || 'Unable to load user access.');
             } finally {
