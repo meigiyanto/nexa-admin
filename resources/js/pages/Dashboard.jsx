@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { LayoutDashboard, Users, Activity, Settings, Bell, Search, Menu, X, LogOut, ChevronDown, Plus, Pencil, Trash2, ArrowUpRight, ShieldCheck, CreditCard } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
+import RolesPage from './RolesPage';
+import UserAccessModal from './UserAccessModal';
 
 const initialForm = {
-    name: '', email: '', password: '',
-    role: 'viewer', status: 'active'
+    name: '', email: '', password: '', status: 'active'
 };
 
 function Avatar({ name }) {
@@ -96,6 +97,7 @@ function Dashboard() {
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState('');
     const [modal, setModal] = useState(false);
+    const [accessUser, setAccessUser] = useState(null);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState(initialForm);
     const [notice, setNotice] = useState('');
@@ -107,6 +109,8 @@ function Dashboard() {
             setStats(data.stats);
             setChart(data.chart);
             setUsers(data.recent_users);
+        } catch (error) {
+            setNotice(error.response?.data?.message || 'Unable to load dashboard.');
         } finally {
             setLoading(false);
         }
@@ -117,14 +121,15 @@ function Dashboard() {
             params: { search }
         });
 
-        setUsers(data.data);
+        setUsers(data.data || []);
     };
 
     useEffect(() => {
         axios.get('/api/user')
             .then(({ data }) => {
-                setUser(data.user);
-                loadDashboard();
+                setUser({ ...data.user, roles: data.roles || [], permissions: data.permissions || [] });
+                if ((data.permissions || []).includes('dashboard.view')) loadDashboard();
+                else setLoading(false);
             })
             .catch(() => setLoading(false));
     }, []);
@@ -152,11 +157,12 @@ function Dashboard() {
             name: item.name,
             email: item.email,
             password: '',
-            role: item.role,
             status: item.status
         });
         setModal(true);
     };
+
+    const openAccess = (item) => setAccessUser(item);
 
     const saveUser = async (e) => {
         e.preventDefault();
@@ -202,16 +208,19 @@ function Dashboard() {
     if (!user) {
         return <Login onLogin={user => {
             setUser(user);
-            loadDashboard();
+            if (user.permissions?.includes('dashboard.view')) loadDashboard();
+            else setLoading(false);
         }}/>;
     }
 
+    const can = permission => user.permissions?.includes(permission) || false;
     const navigation = [
-        {name: 'Overview', icon: LayoutDashboard},
-        {name: 'Users', icon: Users},
-        {name: 'Analytics', icon: Activity},
-        {name: 'Settings', icon: Settings}
-    ];
+        {name: 'Overview', icon: LayoutDashboard, permission: 'dashboard.view'},
+        {name: 'Users', icon: Users, permission: 'users.view'},
+        {name: 'Roles', icon: ShieldCheck, permission: 'roles.view'},
+        {name: 'Analytics', icon: Activity, permission: 'analytics.view'},
+        {name: 'Settings', icon: Settings, permission: 'settings.view'}
+    ].filter(item => can(item.permission));
 
     const cards = [
         {label: 'Total users', value: stats.total_users, icon: Users, color: 'bg-indigo-50 text-indigo-600'},
@@ -287,7 +296,7 @@ function Dashboard() {
                             <Avatar name={user.name}/>
                             <div className="hidden sm:block">
                                 <p className="text-xs font-semibold">{user.name}</p>
-                                <p className="text-xs capitalize text-slate-400">{user.role}</p>
+                                <p className="text-xs capitalize text-slate-400">{user.roles?.join(', ') || 'No role'}</p>
                             </div>
                             <ChevronDown size={14} className="text-slate-400"/>
                         </div>
@@ -302,16 +311,14 @@ function Dashboard() {
                         </div>
                     )}
 
-                    {page === 'Overview' || page === 'Analytics' ? (
+                    {page === 'Overview' ? (
                         <>
                             <div className="mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                                 <div>
                                     <h2 className="text-2xl font-bold tracking-tight">Good morning, {user.name.split(' ')[0]} 👋</h2>
                                     <p className="mt-1 text-sm text-slate-500">Here's what's happening with your workspace today.</p>
                                 </div>
-                                <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
-                                    <Plus size={17}/> Add new user
-                                </button>
+                                {can('users.create') && <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"><Plus size={17}/> Add new user</button>}
                             </div>
 
                             <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -386,7 +393,7 @@ function Dashboard() {
                                     </div>
                                     <button onClick={() => setPage('Users')} className="text-xs font-semibold text-indigo-600">View all users →</button>
                                 </div>
-                                <UserTable users={users.slice(0, 6)} onEdit={openEdit}/>
+                                <UserTable users={users.slice(0, 6)} onEdit={can('users.update') ? openEdit : undefined} onManageAccess={can('users.assign-roles') || can('users.assign-permissions') ? openAccess : undefined}/>
                             </section>
                         </>
                     ) : page === 'Users' ? (
@@ -396,9 +403,7 @@ function Dashboard() {
                                     <h2 className="text-2xl font-bold">Team members</h2>
                                     <p className="mt-1 text-sm text-slate-500">Manage access and roles across your workspace.</p>
                                 </div>
-                                <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white">
-                                    <Plus size={17}/> Add user
-                                </button>
+                                {can('users.create') && <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white"><Plus size={17}/> Add user</button>}
                             </div>
                             <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
                                 <div className="border-b p-4">
@@ -407,9 +412,11 @@ function Dashboard() {
                                         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email..." className="w-full border-0 text-sm focus:ring-0"/>
                                     </div>
                                 </div>
-                                <UserTable users={users} onEdit={openEdit} onDelete={deleteUser}/>
+                                <UserTable users={users} onEdit={can('users.update') ? openEdit : undefined} onDelete={can('users.delete') ? deleteUser : undefined} onManageAccess={can('users.assign-roles') || can('users.assign-permissions') ? openAccess : undefined}/>
                             </div>
                         </>
+                    ) : page === 'Roles' ? (
+                        <RolesPage permissions={user.permissions || []}/>
                     ) : (
                         <div className="rounded-xl border bg-white p-10 text-center">
                             <Settings className="mx-auto mb-3 text-slate-400"/>
@@ -420,6 +427,7 @@ function Dashboard() {
                 </main>
             </div>
 
+            {accessUser && <UserAccessModal user={accessUser} permissions={user.permissions || []} onClose={() => setAccessUser(null)} onSaved={async () => { setAccessUser(null); await loadUsers(); setNotice('User access updated successfully.'); }}/>} 
             {modal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/40 p-4">
                     <form onSubmit={saveUser} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
@@ -437,13 +445,6 @@ function Dashboard() {
                             </label>
                             <label className="text-sm font-medium">Password
                                 <input type="password" required={!editing} value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="mt-1.5 w-full rounded-lg border-slate-200 text-sm" placeholder={editing ? 'Leave blank to keep current' : ''}/>
-                            </label>
-                            <label className="text-sm font-medium">Role
-                                <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="mt-1.5 w-full rounded-lg border-slate-200 text-sm">
-                                    <option value="admin">Admin</option>
-                                    <option value="editor">Editor</option>
-                                    <option value="viewer">Viewer</option>
-                                </select>
                             </label>
                             <label className="text-sm font-medium sm:col-span-2">Status
                                 <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="mt-1.5 w-full rounded-lg border-slate-200 text-sm">
@@ -464,14 +465,14 @@ function Dashboard() {
     );
 }
 
-function UserTable({ users, onEdit, onDelete }) {
+function UserTable({ users, onEdit, onDelete, onManageAccess }) {
     return (
         <div className="overflow-x-auto">
             <table className="w-full min-w-[650px] text-left text-sm">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-400">
                     <tr>
                         <th className="px-5 py-3">User</th>
-                        <th className="px-5 py-3">Role</th>
+                        <th className="px-5 py-3">Roles</th>
                         <th className="px-5 py-3">Status</th>
                         <th className="px-5 py-3">Joined</th>
                         <th className="px-5 py-3 text-right">Actions</th>
@@ -489,7 +490,7 @@ function UserTable({ users, onEdit, onDelete }) {
                                     </div>
                                 </div>
                             </td>
-                            <td className="px-5 py-3 capitalize text-slate-500">{item.role}</td>
+                            <td className="px-5 py-3 capitalize text-slate-500">{item.roles?.join(', ') || '—'}</td>
                             <td className="px-5 py-3">
                                 <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
                                     {item.status}
@@ -498,8 +499,9 @@ function UserTable({ users, onEdit, onDelete }) {
                             <td className="px-5 py-3 text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString()}</td>
                             <td className="px-5 py-3">
                                 <div className="flex justify-end gap-1">
-                                    <button onClick={() => onEdit(item)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Pencil size={15}/></button>
-                                    {onDelete && <button onClick={() => onDelete(item.id)} className="rounded-lg p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={15}/></button>}
+                                    {onManageAccess && <button onClick={() => onManageAccess(item)} title="Manage access" className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"><ShieldCheck size={15}/></button>}
+                                    {onEdit && <button onClick={() => onEdit(item)} title="Edit user" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Pencil size={15}/></button>}
+                                    {onDelete && <button onClick={() => onDelete(item.id)} title="Delete user" className="rounded-lg p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={15}/></button>}
                                 </div>
                             </td>
                         </tr>
