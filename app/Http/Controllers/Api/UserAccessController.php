@@ -87,7 +87,7 @@ class UserAccessController extends Controller
 
         $user->syncRoles($roles);
 
-        return $this->show($user);
+        return $this->show($request, $user);
     }
 
     public function assignPermissions(Request $request, User $user): JsonResponse
@@ -116,6 +116,6 @@ class UserAccessController extends Controller
 
         $user->syncPermissions($permissions);
 
-        return $this->show($user);
+        return $this->show($request, $user);
     }
 }
