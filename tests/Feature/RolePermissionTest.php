@@ -209,4 +209,43 @@ class RolePermissionTest extends TestCase
             ])
             ->assertForbidden();
     }
+
+    public function test_role_manager_cannot_grant_permissions_they_do_not_have(): void
+    {
+        $editorRole = Role::findByName('editor', 'web');
+        $editorRole->givePermissionTo('roles.create');
+
+        $editor = User::factory()->create();
+        $editor->assignRole($editorRole);
+
+        $this->actingAs($editor)
+            ->postJson('/api/roles', [
+                'name' => 'privileged-support',
+                'permissions' => ['dashboard.view', 'users.delete'],
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('roles', [
+            'name' => 'privileged-support',
+            'guard_name' => 'web',
+        ]);
+    }
+
+    public function test_user_access_manager_cannot_grant_permissions_they_do_not_have(): void
+    {
+        $editorRole = Role::findByName('editor', 'web');
+        $editorRole->givePermissionTo('users.assign-permissions');
+
+        $editor = User::factory()->create();
+        $editor->assignRole($editorRole);
+        $target = User::factory()->create();
+
+        $this->actingAs($editor)
+            ->putJson("/api/users/{$target->id}/permissions", [
+                'permissions' => ['users.delete'],
+            ])
+            ->assertForbidden();
+
+        $this->assertFalse($target->fresh()->hasDirectPermission('users.delete'));
+    }
 }
