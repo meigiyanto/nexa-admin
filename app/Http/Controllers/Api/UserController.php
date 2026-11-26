@@ -20,8 +20,8 @@ class UserController extends Controller
         ]);
 
         $users = User::query()
-            ->when($validated['search'] ?? null, function ($query, string $search): void {
-                $query->where(function ($query) use ($search): void {
+            ->when($validated['search'] ?? null, function (Builder $query, string $search): void {
+                $query->where(function (Builder $query) use ($search): void {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
                 });
