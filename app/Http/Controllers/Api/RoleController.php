@@ -38,6 +38,8 @@ class RoleController extends Controller
             'permissions.*' => ['string', 'distinct', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
         ]);
 
+        $this->ensureCanGrantPermissions($request, $validated['permissions'] ?? []);
+
         $role = DB::transaction(function () use ($validated): Role {
             $role = Role::create([
                 'name' => $validated['name'],
@@ -74,6 +76,10 @@ class RoleController extends Controller
             'Built-in role names cannot be changed.'
         );
 
+        if (array_key_exists('permissions', $validated)) {
+            $this->ensureCanGrantPermissions($request, $validated['permissions']);
+        }
+
         DB::transaction(function () use ($role, $validated): void {
             $role->update(['name' => $validated['name']]);
 
@@ -88,6 +94,17 @@ class RoleController extends Controller
         });
 
         return response()->json($role->fresh()->load('permissions:id,name'));
+    }
+
+    private function ensureCanGrantPermissions(Request $request, array $permissionNames): void
+    {
+        $actorPermissions = $request->user()->getAllPermissions()->pluck('name');
+
+        abort_if(
+            collect($permissionNames)->diff($actorPermissions)->isNotEmpty(),
+            403,
+            'You cannot grant permissions that you do not have.'
+        );
     }
 
     public function destroy(Role $role): JsonResponse
