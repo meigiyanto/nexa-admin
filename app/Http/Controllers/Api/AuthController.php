@@ -3,6 +3,7 @@
 namespace App\\Http\\Controllers\\Api;
 
 use App\\Http\\Controllers\\Controller;
+use App\\Models\\User;
 use Illuminate\\Http\\JsonResponse;
 use Illuminate\\Http\\Request;
 use Illuminate\\Support\\Facades\\Auth;
@@ -56,7 +57,7 @@ class AuthController extends Controller
         ]);
     }
 
-    private function userResponse($user): JsonResponse
+    private function userResponse(User $user): JsonResponse
     {
         return response()->json([
             'user' => $user->only(['id', 'name', 'email', 'status']),
