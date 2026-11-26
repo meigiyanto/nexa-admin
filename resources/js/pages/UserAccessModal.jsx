@@ -51,7 +51,7 @@ export default function UserAccessModal({ user, permissions: actorPermissions = 
                 await axios.put(`/api/users/${user.id}/permissions`, { permissions: selectedPermissions });
             }
 
-            onSaved();
+            await onSaved();
         } catch (requestError) {
             setError(requestError.response?.data?.message || Object.values(requestError.response?.data?.errors || {}).flat().join(' ') || 'Unable to update user access.');
         } finally {
