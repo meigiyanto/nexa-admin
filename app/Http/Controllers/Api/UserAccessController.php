@@ -40,7 +40,7 @@ class UserAccessController extends Controller
             return response()->json(['message' => 'One or more roles are invalid.'], 422);
         }
 
-        if ($roles->contains('name', 'admin') && ! $request->user()->can('users.assign-admin-role')) {
+        if ($roles->contains('name', 'admin') && ! $user->hasRole('admin') && ! $request->user()->can('users.assign-admin-role')) {
             abort(403, 'You cannot assign the admin role.');
         }
 
@@ -67,7 +67,8 @@ class UserAccessController extends Controller
             'permissions.*' => ['required', 'string', 'distinct', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
         ]);
 
-        if (in_array('users.assign-admin-role', $validated['permissions'], true) && ! $request->user()->can('users.assign-admin-role')) {
+        $alreadyHasAdminAssignment = $user->getDirectPermissions()->contains('name', 'users.assign-admin-role');
+        if (in_array('users.assign-admin-role', $validated['permissions'], true) && ! $alreadyHasAdminAssignment && ! $request->user()->can('users.assign-admin-role')) {
             abort(403, 'You cannot grant administrator assignment permission.');
         }
 
