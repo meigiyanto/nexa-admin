@@ -33,7 +33,11 @@ class UserAccessController extends Controller
                     ->values()
                 : [],
             'available_permissions' => $request->user()->can('users.assign-permissions')
-                ? Permission::query()->where('guard_name', 'web')->orderBy('name')->get(['id', 'name'])
+                ? Permission::query()
+                    ->where('guard_name', 'web')
+                    ->whereIn('name', $request->user()->getAllPermissions()->pluck('name')->merge($user->getDirectPermissions()->pluck('name')))
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
                 : [],
         ]);
     }
