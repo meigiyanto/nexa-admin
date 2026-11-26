@@ -166,9 +166,19 @@ function Dashboard() {
             setModal(false);
             setAccessUser(null);
         } catch (error) {
-            setNotice(error.response?.status === 401
-                ? 'Your session has expired. Please sign in again.'
-                : error.response?.data?.message || 'Unable to sign out. Please try again.');
+            if (error.response?.status === 401) {
+                // The server already considers this browser unauthenticated.
+                setUser(null);
+                setPage('Overview');
+                setStats({});
+                setChart([]);
+                setUsers([]);
+                setMobileOpen(false);
+                setModal(false);
+                setAccessUser(null);
+            } else {
+                setNotice(error.response?.data?.message || 'Unable to sign out. Please try again.');
+            }
         } finally {
             setLogoutLoading(false);
         }
