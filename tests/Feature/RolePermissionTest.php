@@ -248,4 +248,32 @@ class RolePermissionTest extends TestCase
 
         $this->assertFalse($target->fresh()->hasDirectPermission('users.delete'));
     }
+
+    public function test_role_assigner_cannot_assign_a_role_with_higher_permissions(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $this->actingAs($admin)
+            ->postJson('/api/roles', [
+                'name' => 'finance-manager',
+                'permissions' => ['dashboard.view', 'settings.update'],
+            ])
+            ->assertCreated();
+
+        $editorRole = Role::findByName('editor', 'web');
+        $editorRole->givePermissionTo('users.assign-roles');
+
+        $editor = User::factory()->create();
+        $editor->assignRole($editorRole);
+        $target = User::factory()->create();
+
+        $this->actingAs($editor)
+            ->putJson("/api/users/{$target->id}/roles", [
+                'roles' => ['finance-manager'],
+            ])
+            ->assertForbidden();
+
+        $this->assertFalse($target->fresh()->hasRole('finance-manager'));
+    }
 }
