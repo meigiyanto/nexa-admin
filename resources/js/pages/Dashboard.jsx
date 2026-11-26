@@ -430,7 +430,7 @@ function Dashboard() {
                 </main>
             </div>
 
-            {accessUser && <UserAccessModal user={accessUser} permissions={user.permissions || []} onClose={() => setAccessUser(null)} onSaved={async () => { setAccessUser(null); await loadUsers(); setNotice('User access updated successfully.'); }}/>} 
+            {accessUser && <UserAccessModal user={accessUser} permissions={user.permissions || []} onClose={() => setAccessUser(null)} onSaved={async () => { setAccessUser(null); if (page === 'Users') await loadUsers(); setNotice('User access updated successfully.'); }}/>} 
             {modal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/40 p-4">
                     <form onSubmit={saveUser} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
