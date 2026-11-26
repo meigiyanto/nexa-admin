@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Activity, Settings, Bell, Search, Menu, X, LogOut, ChevronDown, Plus, Pencil, Trash2, ArrowUpRight, ShieldCheck, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Bell, Search, Menu, X, LogOut, ChevronDown, Plus, Pencil, Trash2, ArrowUpRight, ShieldCheck, CreditCard, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import RolesPage from './RolesPage';
@@ -92,6 +92,7 @@ function Dashboard() {
     const [user, setUser] = useState(null);
     const [page, setPage] = useState('Overview');
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [stats, setStats] = useState({});
     const [chart, setChart] = useState([]);
     const [users, setUsers] = useState([]);
@@ -251,48 +252,49 @@ function Dashboard() {
                 <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)}/>
             )}
 
-            <aside className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-white transition-transform lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex h-[76px] items-center justify-between border-b px-6">
+            <aside className={`fixed inset-y-0 left-0 z-50 flex ${sidebarCollapsed ? 'w-20' : 'w-64'} flex-col border-r bg-white transition-all duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className={`flex h-[76px] items-center border-b ${sidebarCollapsed ? 'justify-center px-3' : 'justify-between px-6'}`}>
                     <div className="flex items-center gap-3">
                         <div className="rounded-xl bg-indigo-600 p-2.5 text-white">
                             <LayoutDashboard size={20}/>
                         </div>
-                        <span className="text-xl font-extrabold">nexa<span className="text-indigo-600">.</span></span>
+                        {!sidebarCollapsed && <span className="text-xl font-extrabold">nexa<span className="text-indigo-600">.</span></span>}
                     </div>
                     <button className="lg:hidden" onClick={() => setMobileOpen(false)}><X/></button>
                 </div>
 
                 <div className="px-4 pt-7">
-                    <p className="mb-3 px-3 text-xs font-bold uppercase tracking-wider text-slate-400">Workspace</p>
+                    {!sidebarCollapsed && <p className="mb-3 px-3 text-xs font-bold uppercase tracking-wider text-slate-400">Workspace</p>}
                     {navigation.map(({name, icon: Icon}) => (
                         <button key={name} onClick={() => {
                             setPage(name);
                             setMobileOpen(false);
-                        }} className={`mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${page === name ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+                        }} title={sidebarCollapsed ? name : undefined} className={`mb-1 flex w-full items-center ${sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} rounded-lg py-2.5 text-sm font-medium ${page === name ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}>
                             <Icon size={18}/>
-                            {name}
+                            {!sidebarCollapsed && name}
                         </button>
                     ))}
                 </div>
 
                 <div className="mt-auto p-4">
-                    <div className="rounded-xl bg-slate-50 p-4">
+                    {!sidebarCollapsed && <div className="rounded-xl bg-slate-50 p-4">
                         <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
                             <ShieldCheck size={17} className="text-indigo-600"/>
                             Pro workspace
                         </div>
                         <p className="text-xs leading-5 text-slate-500">Manage your workspace and team from one place.</p>
-                    </div>
-                    <button onClick={logout} className="mt-4 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-500 hover:bg-rose-50 hover:text-rose-600">
-                        <LogOut size={18}/> Sign out
+                    </div>}
+                    <button onClick={logout} title={sidebarCollapsed ? 'Sign out' : undefined} className={`mt-4 flex w-full items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} rounded-lg py-2.5 text-sm text-slate-500 hover:bg-rose-50 hover:text-rose-600`}>
+                        <LogOut size={18}/>{!sidebarCollapsed && 'Sign out'}
                     </button>
                 </div>
             </aside>
 
-            <div className="lg:pl-64">
+            <div className={`transition-[padding] duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
                 <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b bg-white/90 px-4 backdrop-blur md:px-8">
                     <div className="flex items-center gap-3">
-                        <button className="lg:hidden" onClick={() => setMobileOpen(true)}><Menu/></button>
+                        <button className="hidden rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:inline-flex" onClick={() => setSidebarCollapsed(value => !value)} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>{sidebarCollapsed ? <PanelLeftOpen size={19}/> : <PanelLeftClose size={19}/>}</button>
+                        <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu/></button>
                         <div>
                             <p className="text-xs text-slate-400">Workspace / {page}</p>
                             <h1 className="text-lg font-bold">{page}</h1>
