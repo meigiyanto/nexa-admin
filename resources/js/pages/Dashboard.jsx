@@ -103,6 +103,7 @@ function Dashboard() {
     const [form, setForm] = useState(initialForm);
     const [notice, setNotice] = useState('');
     const [loading, setLoading] = useState(true);
+    const [logoutLoading, setLogoutLoading] = useState(false);
 
     const loadDashboard = async () => {
         try {
@@ -150,8 +151,27 @@ function Dashboard() {
     }, [user, page, search]);
 
     const logout = async () => {
-        await axios.post('/api/logout');
-        setUser(null);
+        if (logoutLoading) return;
+        setLogoutLoading(true);
+        setNotice('');
+
+        try {
+            await axios.post('/api/logout');
+            setUser(null);
+            setPage('Overview');
+            setStats({});
+            setChart([]);
+            setUsers([]);
+            setMobileOpen(false);
+            setModal(false);
+            setAccessUser(null);
+        } catch (error) {
+            setNotice(error.response?.status === 401
+                ? 'Your session has expired. Please sign in again.'
+                : error.response?.data?.message || 'Unable to sign out. Please try again.');
+        } finally {
+            setLogoutLoading(false);
+        }
     };
 
     const openCreate = () => {
@@ -284,8 +304,8 @@ function Dashboard() {
                         </div>
                         <p className="text-xs leading-5 text-slate-500">Manage your workspace and team from one place.</p>
                     </div>}
-                    <button onClick={logout} title={sidebarCollapsed ? 'Sign out' : undefined} className={`mt-4 flex w-full items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} rounded-lg py-2.5 text-sm text-slate-500 hover:bg-rose-50 hover:text-rose-600`}>
-                        <LogOut size={18}/>{!sidebarCollapsed && 'Sign out'}
+                    <button onClick={logout} disabled={logoutLoading} title={sidebarCollapsed ? 'Sign out' : undefined} className={`mt-4 flex w-full items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} rounded-lg py-2.5 text-sm text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-wait disabled:opacity-50`}>
+                        <LogOut size={18}/>{!sidebarCollapsed && (logoutLoading ? 'Signing out...' : 'Sign out')}
                     </button>
                 </div>
             </aside>
