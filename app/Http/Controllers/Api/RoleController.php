@@ -68,6 +68,12 @@ class RoleController extends Controller
             'permissions.*' => ['string', 'distinct', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
         ]);
 
+        abort_if(
+            in_array($role->name, ['admin', 'editor', 'viewer'], true) && $validated['name'] !== $role->name,
+            403,
+            'Built-in role names cannot be changed.'
+        );
+
         DB::transaction(function () use ($role, $validated): void {
             $role->update(['name' => $validated['name']]);
 
