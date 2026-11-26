@@ -15,16 +15,17 @@ export default function RolesPage({ permissions: currentPermissions = [] }) {
     const canCreate = currentPermissions.includes('roles.create');
     const canUpdate = currentPermissions.includes('roles.update');
     const canDelete = currentPermissions.includes('roles.delete');
+    const canManagePermissions = currentPermissions.includes('permissions.view');
 
     async function loadData() {
         setLoading(true);
         try {
-            const [roleResponse, permissionResponse] = await Promise.all([
-                axios.get('/api/roles'),
-                axios.get('/api/permissions'),
-            ]);
+            const roleResponse = await axios.get('/api/roles');
             setRoles(roleResponse.data.data);
-            setPermissions(permissionResponse.data.data);
+            if (canManagePermissions) {
+                const permissionResponse = await axios.get('/api/permissions');
+                setPermissions(permissionResponse.data.data);
+            }
         } catch (error) {
             setError(error.response?.data?.message || 'Unable to load roles.');
         } finally {
@@ -108,7 +109,7 @@ export default function RolesPage({ permissions: currentPermissions = [] }) {
                     <h1 className="text-2xl font-bold text-slate-900">Roles & Permissions</h1>
                     <p className="mt-1 text-sm text-slate-500">Manage roles and their access permissions.</p>
                 </div>
-                {canCreate && !editing && (
+                {canCreate && canManagePermissions && !editing && (
                     <button onClick={resetForm} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
                         <Plus size={17} /> New Role
                     </button>
@@ -117,14 +118,14 @@ export default function RolesPage({ permissions: currentPermissions = [] }) {
 
             {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
-            {(canCreate || canUpdate) && (
+            {canManagePermissions && (canCreate || canUpdate) && (
                 <form onSubmit={saveRole} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="font-semibold text-slate-900">{editing ? 'Edit Role' : 'Create Role'}</h2>
                         {editing && <button type="button" onClick={resetForm} className="text-slate-500"><X size={18} /></button>}
                     </div>
                     <label className="mb-2 block text-sm font-medium text-slate-700">Role name</label>
-                    <input value={name} onChange={event => setName(event.target.value)} required pattern="[a-z0-9_-]+" maxLength={100} disabled={editing && editing === roles.find(role => role.name === 'admin')?.id} placeholder="e.g. support" className="mb-5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+                    <input value={name} onChange={event => setName(event.target.value)} required pattern="[a-z0-9_-]+" maxLength={100} disabled={editing && ['admin', 'editor', 'viewer'].includes(roles.find(role => role.id === editing)?.name)} placeholder="e.g. support" className="mb-5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
                     <h3 className="mb-3 text-sm font-semibold text-slate-800">Permissions</h3>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {Object.entries(grouped).map(([group, items]) => (
@@ -162,7 +163,7 @@ export default function RolesPage({ permissions: currentPermissions = [] }) {
                                 </div>
                             </div>
                             <div className="flex gap-1">
-                                {canUpdate && role.name !== 'admin' && <button onClick={() => editRole(role)} title="Edit role" className="rounded-md p-2 text-slate-500 hover:bg-slate-100"><Pencil size={16} /></button>}
+                                {canUpdate && canManagePermissions && role.name !== 'admin' && <button onClick={() => editRole(role)} title="Edit role" className="rounded-md p-2 text-slate-500 hover:bg-slate-100"><Pencil size={16} /></button>}
                                 {canDelete && !['admin', 'editor', 'viewer'].includes(role.name) && <button onClick={() => deleteRole(role)} title="Delete role" className="rounded-md p-2 text-red-500 hover:bg-red-50"><Trash2 size={16} /></button>}
                             </div>
                         </div>
