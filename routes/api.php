@@ -35,8 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('can:users.delete');
 
     // User access management
-    Route::get('/users/{user}/access', [UserAccessController::class, 'show'])
-        ->middleware('can:users.view');
+    Route::get('/users/{user}/access', [UserAccessController::class, 'show']);
 
     Route::put('/users/{user}/roles', [UserAccessController::class, 'assignRoles'])
         ->middleware('can:users.assign-roles');
