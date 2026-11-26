@@ -1,56 +1,63 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\\Http\\Controllers\\Api;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use App\\Http\\Controllers\\Controller;
+use Illuminate\\Http\\JsonResponse;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\DB;
+use Illuminate\\Validation\\Rule;
+use Spatie\\Permission\\Models\\Permission;
+use Spatie\\Permission\\Models\\Role;
 
 class RoleController extends Controller
 {
-    public function index()
+    public function index(): JsonResponse
     {
         return response()->json(
-            Role::with('permissions')
+            Role::query()
+                ->with('permissions:id,name')
                 ->where('guard_name', 'web')
                 ->orderBy('name')
-                ->paginate(15)
+                ->paginate(100)
         );
     }
 
-    public function show(Role $role)
+    public function show(Role $role): JsonResponse
     {
         abort_unless($role->guard_name === 'web', 404);
 
-        return response()->json(
-            $role->load('permissions')
-        );
+        return response()->json($role->load('permissions:id,name'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_-]+$/', Rule::unique('roles')->where('guard_name', 'web')],
             'permissions' => ['sometimes', 'array'],
-            'permissions.*' => ['string', 'distinct', 'exists:permissions,name'],
+            'permissions.*' => ['string', 'distinct', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
         ]);
 
-        $role = Role::create([
-            'name' => $validated['name'],
-            'guard_name' => 'web',
-        ]);
+        $role = DB::transaction(function () use ($validated): Role {
+            $role = Role::create([
+                'name' => $validated['name'],
+                'guard_name' => 'web',
+            ]);
 
-        $role->syncPermissions($validated['permissions'] ?? []);
+            $permissions = Permission::query()
+                ->where('guard_name', 'web')
+                ->whereIn('name', $validated['permissions'] ?? [])
+                ->get();
 
-        return response()->json(
-            $role->load('permissions'),
-            201
-        );
+            $role->syncPermissions($permissions);
+
+            return $role;
+        });
+
+        return response()->json($role->load('permissions:id,name'), 201);
     }
 
-    public function update(Request $request, Role $role)
+    public function update(Request $request, Role $role): JsonResponse
     {
         abort_unless($role->guard_name === 'web', 404);
         abort_if($role->name === 'admin', 403, 'The admin role is protected.');
@@ -58,26 +65,35 @@ class RoleController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_-]+$/', Rule::unique('roles')->where('guard_name', 'web')->ignore($role->id)],
             'permissions' => ['sometimes', 'array'],
-            'permissions.*' => ['string', 'distinct', 'exists:permissions,name'],
+            'permissions.*' => ['string', 'distinct', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
         ]);
 
-        $role->update(['name' => $validated['name']]);
+        DB::transaction(function () use ($role, $validated): void {
+            $role->update(['name' => $validated['name']]);
 
-        if (array_key_exists('permissions', $validated)) {
-            $role->syncPermissions($validated['permissions']);
-        }
+            if (array_key_exists('permissions', $validated)) {
+                $permissions = Permission::query()
+                    ->where('guard_name', 'web')
+                    ->whereIn('name', $validated['permissions'])
+                    ->get();
 
-        return response()->json(
-            $role->load('permissions')
-        );
+                $role->syncPermissions($permissions);
+            }
+        });
+
+        return response()->json($role->fresh()->load('permissions:id,name'));
     }
 
-    public function destroy(Role $role)
+    public function destroy(Role $role): JsonResponse
     {
         abort_unless($role->guard_name === 'web', 404);
         abort_if(in_array($role->name, ['admin', 'editor', 'viewer'], true), 403, 'Built-in roles cannot be deleted.');
 
-        if ($role->users()->exists()) {
+        $isAssigned = DB::table('model_has_roles')
+            ->where('role_id', $role->id)
+            ->exists();
+
+        if ($isAssigned) {
             return response()->json([
                 'message' => 'This role is assigned to users and cannot be deleted.',
             ], 422);
@@ -85,8 +101,6 @@ class RoleController extends Controller
 
         $role->delete();
 
-        return response()->json([
-            'message' => 'Role deleted successfully.',
-        ]);
+        return response()->json(['message' => 'Role deleted successfully.']);
     }
 }
