@@ -156,4 +156,57 @@ class RolePermissionTest extends TestCase
             'role_id' => Role::findByName('viewer', 'web')->id,
         ]);
     }
+
+    public function test_authenticated_user_endpoint_returns_roles_and_permissions(): void
+    {
+        $viewer = User::factory()->create();
+        $viewer->assignRole('viewer');
+
+        $this->actingAs($viewer)
+            ->getJson('/api/user')
+            ->assertOk()
+            ->assertJsonPath('user.id', $viewer->id)
+            ->assertJsonPath('roles', ['viewer'])
+            ->assertJsonFragment(['dashboard.view']);
+    }
+
+    public function test_dashboard_works_without_the_legacy_role_column(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $this->actingAs($admin)
+            ->getJson('/api/dashboard')
+            ->assertOk()
+            ->assertJsonStructure([
+                'stats' => ['total_users', 'active_users', 'inactive_users', 'new_users'],
+                'chart',
+                'recent_users',
+            ]);
+    }
+
+    public function test_legacy_role_field_is_rejected_by_user_update_api(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $target = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->putJson("/api/users/{$target->id}", ['role' => 'admin'])
+            ->assertUnprocessable();
+    }
+
+    public function test_builtin_role_names_cannot_be_renamed(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $editor = Role::findByName('editor', 'web');
+
+        $this->actingAs($admin)
+            ->putJson("/api/roles/{$editor->id}", [
+                'name' => 'content-editor',
+                'permissions' => ['dashboard.view'],
+            ])
+            ->assertForbidden();
+    }
 }
