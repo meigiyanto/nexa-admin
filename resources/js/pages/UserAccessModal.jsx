@@ -91,7 +91,7 @@ export default function UserAccessModal({ user, permissions: actorPermissions = 
                                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                         {roles.map(role => (
                                             <label key={role.id} className="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm capitalize text-slate-700">
-                                                <input type="checkbox" disabled={role.name === 'admin' && !canAssignAdmin} checked={selectedRoles.includes(role.name)} onChange={() => toggleValue(role.name, selectedRoles, setSelectedRoles)} className="rounded border-slate-300 text-indigo-600"/>
+                                                <input type="checkbox" disabled={(role.name === 'admin' && !canAssignAdmin) || (selectedRoles.includes(role.name) && selectedRoles.length === 1)} checked={selectedRoles.includes(role.name)} onChange={() => toggleValue(role.name, selectedRoles, setSelectedRoles)} className="rounded border-slate-300 text-indigo-600"/>
                                                 {role.name}
                                                 {role.name === 'admin' && !canAssignAdmin && <span className="ml-auto text-xs text-slate-400">Restricted</span>}
                                             </label>
