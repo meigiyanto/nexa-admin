@@ -27,7 +27,10 @@ class UserAccessController extends Controller
             'permissions' => $user->getAllPermissions()->pluck('name')->values(),
             'direct_permissions' => $user->getDirectPermissions()->pluck('name')->values(),
             'available_roles' => $request->user()->can('users.assign-roles')
-                ? Role::query()->where('guard_name', 'web')->orderBy('name')->get(['id', 'name'])
+                ? Role::query()->with('permissions')->where('guard_name', 'web')->orderBy('name')->get()
+                    ->filter(fn (Role $role): bool => $user->hasRole($role->name) || $role->permissions->pluck('name')->diff($request->user()->getAllPermissions()->pluck('name'))->isEmpty())
+                    ->map(fn (Role $role): array => ['id' => $role->id, 'name' => $role->name])
+                    ->values()
                 : [],
             'available_permissions' => $request->user()->can('users.assign-permissions')
                 ? Permission::query()->where('guard_name', 'web')->orderBy('name')->get(['id', 'name'])
@@ -57,6 +60,18 @@ class UserAccessController extends Controller
             abort(403, 'You cannot assign the admin role.');
         }
 
+        $actorPermissions = $request->user()->getAllPermissions()->pluck('name');
+        $newRolePermissions = $roles
+            ->reject(fn (Role $role): bool => $user->hasRole($role->name))
+            ->flatMap(fn (Role $role) => $role->permissions()->pluck('name'))
+            ->unique();
+
+        abort_if(
+            $newRolePermissions->diff($actorPermissions)->isNotEmpty(),
+            403,
+            'You cannot assign a role with permissions that you do not have.'
+        );
+
         $willRemainAdmin = $roles->contains('name', 'admin');
         if ($user->hasRole('admin') && ! $willRemainAdmin && $user->status === 'active') {
             abort_if(
@@ -80,10 +95,15 @@ class UserAccessController extends Controller
             'permissions.*' => ['required', 'string', 'distinct', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
         ]);
 
-        $alreadyHasAdminAssignment = $user->getDirectPermissions()->contains('name', 'users.assign-admin-role');
-        if (in_array('users.assign-admin-role', $validated['permissions'], true) && ! $alreadyHasAdminAssignment && ! $request->user()->can('users.assign-admin-role')) {
-            abort(403, 'You cannot grant administrator assignment permission.');
-        }
+        $existingDirectPermissions = $user->getDirectPermissions()->pluck('name');
+        $newPermissions = collect($validated['permissions'])->diff($existingDirectPermissions);
+        $actorPermissions = $request->user()->getAllPermissions()->pluck('name');
+
+        abort_if(
+            $newPermissions->diff($actorPermissions)->isNotEmpty(),
+            403,
+            'You cannot grant permissions that you do not have.'
+        );
 
         $permissions = Permission::query()
             ->where('guard_name', 'web')
