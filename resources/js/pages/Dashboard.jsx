@@ -128,8 +128,16 @@ function Dashboard() {
         axios.get('/api/user')
             .then(({ data }) => {
                 setUser({ ...data.user, roles: data.roles || [], permissions: data.permissions || [] });
-                if ((data.permissions || []).includes('dashboard.view')) loadDashboard();
-                else setLoading(false);
+                if ((data.permissions || []).includes('dashboard.view')) {
+                    loadDashboard();
+                } else {
+                    const availablePage = ['Users', 'Roles', 'Analytics'].find((page, index) => {
+                        const permission = ['users.view', 'roles.view', 'analytics.view'][index];
+                        return (data.permissions || []).includes(permission);
+                    });
+                    setPage(availablePage || 'No Access');
+                    setLoading(false);
+                }
             })
             .catch(() => setLoading(false));
     }, []);
@@ -208,9 +216,14 @@ function Dashboard() {
     if (!user) {
         return <Login onLogin={user => {
             setUser(user);
-            if (user.permissions?.includes('dashboard.view')) loadDashboard();
-            else {
-                setPage(user.permissions?.includes('users.view') ? 'Users' : 'Overview');
+            if (user.permissions?.includes('dashboard.view')) {
+                loadDashboard();
+            } else {
+                const availablePage = ['Users', 'Roles', 'Analytics'].find((page, index) => {
+                    const permission = ['users.view', 'roles.view', 'analytics.view'][index];
+                    return user.permissions?.includes(permission);
+                });
+                setPage(availablePage || 'No Access');
                 setLoading(false);
             }
         }}/>;
@@ -394,7 +407,7 @@ function Dashboard() {
                                         <h3 className="font-bold">Recent users</h3>
                                         <p className="mt-1 text-xs text-slate-400">Latest members in your workspace</p>
                                     </div>
-                                    <button onClick={() => setPage('Users')} className="text-xs font-semibold text-indigo-600">View all users →</button>
+                                    {can('users.view') && <button onClick={() => setPage('Users')} className="text-xs font-semibold text-indigo-600">View all users →</button>}
                                 </div>
                                 <UserTable users={users.slice(0, 6)} onEdit={can('users.update') ? openEdit : undefined} onManageAccess={can('users.assign-roles') || can('users.assign-permissions') ? openAccess : undefined}/>
                             </section>
@@ -424,13 +437,13 @@ function Dashboard() {
                         <div className="rounded-xl border bg-white p-10 text-center">
                             <Settings className="mx-auto mb-3 text-slate-400"/>
                             <h2 className="font-bold">{page}</h2>
-                            <p className="mt-1 text-sm text-slate-500">This section will be implemented in the next phase.</p>
+                            <p className="mt-1 text-sm text-slate-500">{page === 'No Access' ? 'Your account does not have permission to view any dashboard section.' : 'This section will be implemented in the next phase.'}</p>
                         </div>
                     )}
                 </main>
             </div>
 
-            {accessUser && <UserAccessModal user={accessUser} permissions={user.permissions || []} onClose={() => setAccessUser(null)} onSaved={async () => { setAccessUser(null); if (page === 'Users') await loadUsers(); setNotice('User access updated successfully.'); }}/>} 
+            {accessUser && <UserAccessModal user={accessUser} permissions={user.permissions || []} onClose={() => setAccessUser(null)} onSaved={async () => { setAccessUser(null); if (page === 'Users') await loadUsers(); else if (can('dashboard.view')) await loadDashboard(); setNotice('User access updated successfully.'); }}/>} 
             {modal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/40 p-4">
                     <form onSubmit={saveUser} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
