@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\User;
-use Database\\Seeders\\PermissionSeeder;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Spatie\\Permission\\Models\\Role;
-use Tests\\TestCase;
+use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 class RolePermissionTest extends TestCase
 {
