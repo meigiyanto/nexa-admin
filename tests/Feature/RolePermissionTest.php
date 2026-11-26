@@ -157,6 +157,26 @@ class RolePermissionTest extends TestCase
         ]);
     }
 
+    public function test_login_session_can_be_used_to_logout(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'logout-test@example.com',
+            'password' => bcrypt('secret-password'),
+        ]);
+        $user->assignRole('viewer');
+
+        $this->postJson('/api/login', [
+            'email' => 'logout-test@example.com',
+            'password' => 'secret-password',
+        ])->assertOk();
+
+        $this->postJson('/api/logout')
+            ->assertOk()
+            ->assertJsonPath('message', 'Logged out successfully.');
+
+        $this->assertGuest('web');
+    }
+
     public function test_authenticated_user_endpoint_returns_roles_and_permissions(): void
     {
         $viewer = User::factory()->create();
