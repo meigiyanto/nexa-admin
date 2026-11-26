@@ -35,7 +35,7 @@ function Login({ onLogin }) {
         try {
             await axios.get('/sanctum/csrf-cookie');
             const { data } = await axios.post('/api/login', form);
-            onLogin(data.user);
+            onLogin({ ...data.user, roles: data.roles || [], permissions: data.permissions || [] });
         } catch (error) {
             setError(error.response?.data?.message || 'Login failed.');
         } finally {
@@ -209,7 +209,10 @@ function Dashboard() {
         return <Login onLogin={user => {
             setUser(user);
             if (user.permissions?.includes('dashboard.view')) loadDashboard();
-            else setLoading(false);
+            else {
+                setPage(user.permissions?.includes('users.view') ? 'Users' : 'Overview');
+                setLoading(false);
+            }
         }}/>;
     }
 
