@@ -23,13 +23,14 @@ button, input, select, textarea {
     select,
     textarea {
         @apply rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400;
-        @apply outline-none transition-colors focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0;
+        @apply outline-none transition-colors;
     }
 
     input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
     select:focus,
     textarea:focus {
-        @apply border-transparent outline-none ring-0;
+        border-color: transparent;
+        outline: none;
         box-shadow: none;
     }
 }
