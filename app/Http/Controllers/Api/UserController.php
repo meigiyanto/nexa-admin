@@ -11,29 +11,49 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        return User::query()
+        $users = User::query()
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
                 });
             })
+            ->with('roles:id,name')
             ->latest()
             ->paginate(10);
+            
+        return response()->json([
+            'data' => $users->through(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'status' => $user->status,
+                'roles' => $user->getRoleNames(),
+                'created_at' => $user->created_at,
+            ]),
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+            ],
+        ]);
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', Rule::in(['admin', 'editor', 'viewer'])],
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ]);
 
+        $user = User::create($validated);
+        $user->assignRole('viewer');
+
         return response()->json([
-            'user' => User::create($data),
+            'user' => $user,
         ], 201);
     }
 
