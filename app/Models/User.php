@@ -17,6 +17,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'profile_photo_path',
         'password',
         'status',
     ];
@@ -32,5 +33,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    protected function getProfilePhotoUrlAttribute(): ?string
+    {
+        return $this->profile_photo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->profile_photo_path) : null;
     }
 }
