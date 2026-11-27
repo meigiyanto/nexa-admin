@@ -7,6 +7,7 @@ export default function SecuritySettings({ user }) {
     const [password, setPassword] = useState('');
     const [code, setCode] = useState('');
     const [secret, setSecret] = useState('');
+    const [setupExpiresIn, setSetupExpiresIn] = useState(10);
     const [enabled, setEnabled] = useState(Boolean(user.two_factor_enabled));
     const [recoveryCodes, setRecoveryCodes] = useState([]);
     const [message, setMessage] = useState('');
@@ -20,7 +21,7 @@ export default function SecuritySettings({ user }) {
 
     const start = async e => {
         e.preventDefault(); setError(''); setMessage('');
-        try { setSecret((await axios.post('/api/security/two-factor/setup', { current_password: password })).data.secret); setPassword(''); }
+        try { const data = (await axios.post('/api/security/two-factor/setup', { current_password: password })).data; setSecret(data.secret); setSetupExpiresIn(data.expires_in_minutes || 10); setPassword(''); }
         catch (e) { setError(e.response?.data?.message || 'Unable to start setup.'); }
     };
     const enable = async e => {
@@ -119,9 +120,10 @@ export default function SecuritySettings({ user }) {
                 {secret && 
                     <form onSubmit={enable} className="mt-4 space-y-3">
                         <p className="text-sm">
-                            Add this key manually in your authenticator app for {user.email}:
+                            Add this key manually in your authenticator app for {user.email}. This setup expires in {setupExpiresIn} minutes.
                         </p>
                         <code className="block break-all rounded bg-slate-100 p-3 dark:bg-slate-800">{secret}</code>
+                        <button type="button" onClick={() => navigator.clipboard?.writeText(secret)} className="text-sm font-semibold text-indigo-600 underline dark:text-indigo-400">Copy setup key</button>
                         <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-xs" /></label>
                         <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Verify and enable</button>
                     </form>

@@ -21,5 +21,13 @@ class AppServiceProvider extends ServiceProvider
                 $request->ip().'|'.$request->input('email')
             );
         });
+
+        RateLimiter::for('two-factor', function (Request $request) {
+            $challengeUserId = $request->session()->get('two_factor_login_user_id');
+
+            return Limit::perMinute(5)->by(
+                $challengeUserId ? 'user:'.$challengeUserId : 'ip:'.$request->ip()
+            );
+        });
     }
 }

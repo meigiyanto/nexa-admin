@@ -98,6 +98,68 @@ class SecuritySettingsTest extends TestCase
         $this->assertDatabaseMissing('sessions', ['id' => 'another-device-session']);
     }
 
+    public function test_two_factor_login_challenge_is_rate_limited_per_account(): void
+    {
+        $user = $this->twoFactorUser();
+
+        $this->postJson('/api/login', [
+            'email' => $user->email,
+            'password' => 'current-password',
+        ])->assertOk()->assertJsonPath('requires_two_factor', true);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->postJson('/api/login/two-factor', ['code' => '000000'])->assertUnprocessable();
+        }
+
+        $this->postJson('/api/login/two-factor', ['code' => '000000'])->assertTooManyRequests();
+    }
+
+    public function test_pending_two_factor_setup_expires_after_ten_minutes(): void
+    {
+        $user = User::factory()->create(['password' => 'current-password']);
+
+        $setup = $this->actingAs($user)->postJson('/api/security/two-factor/setup', [
+            'current_password' => 'current-password',
+        ])->assertOk()->assertJsonPath('expires_in_minutes', 10);
+
+        $this->travel(11)->minutes();
+
+        $this->postJson('/api/security/two-factor/enable', [
+            'code' => $this->totpCode($setup->json('secret')),
+        ])->assertUnprocessable();
+
+        $this->assertNull($user->fresh()->two_factor_confirmed_at);
+        $this->assertNull($user->fresh()->two_factor_secret);
+    }
+
+    public function test_user_can_disable_two_factor_after_password_and_code_confirmation(): void
+    {
+        $user = $this->twoFactorUser();
+
+        $this->actingAs($user)->deleteJson('/api/security/two-factor', [
+            'current_password' => 'current-password',
+            'code' => $this->totpCode($user->two_factor_secret),
+        ])->assertOk();
+
+        $this->assertNull($user->fresh()->two_factor_confirmed_at);
+        $this->assertNull($user->fresh()->two_factor_secret);
+        $this->assertNull($user->fresh()->two_factor_recovery_codes);
+    }
+
+    public function test_user_can_regenerate_recovery_codes_after_password_and_totp_confirmation(): void
+    {
+        $user = $this->twoFactorUser();
+        $oldCodes = $user->two_factor_recovery_codes;
+
+        $response = $this->actingAs($user)->postJson('/api/security/two-factor/recovery-codes', [
+            'current_password' => 'current-password',
+            'code' => $this->totpCode($user->two_factor_secret),
+        ])->assertOk()->assertJsonCount(10, 'recovery_codes');
+
+        $this->assertNotSame($oldCodes, $user->fresh()->two_factor_recovery_codes);
+        $this->assertNotSame($response->json('recovery_codes.0'), $user->fresh()->two_factor_recovery_codes[0]);
+    }
+
     private function twoFactorUser(array $attributes = []): User
     {
         $secret = app(TwoFactorService::class)->generateSecret();
