@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Alert from '../components/Alert';
 
 export default function SecuritySettings({ user }) {
     const [sessions, setSessions] = useState([]);
@@ -67,8 +68,8 @@ export default function SecuritySettings({ user }) {
         <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <h2 className="text-xl font-bold">Active sessions</h2>
             <p className="mt-1 text-sm text-slate-500">Review and revoke browsers signed in to your account.</p>
-            {sessionError && <div role="alert" className="mt-4 flex items-start justify-between gap-3 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200"><p>{sessionError}</p><button type="button" onClick={() => setSessionError('')} aria-label="Dismiss error" className="shrink-0 rounded px-2 font-semibold hover:bg-rose-100 dark:hover:bg-rose-900">×</button></div>}
-            {sessionMessage && <div role="status" className="mt-4 flex items-start justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"><p>{sessionMessage}</p><button type="button" onClick={() => setSessionMessage('')} aria-label="Dismiss success message" className="shrink-0 rounded px-2 font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900">×</button></div>}
+            {sessionError && <Alert type="error" onClose={() => setSessionError('')} className="mt-4">{sessionError}</Alert>}
+            {sessionMessage && <Alert type="success" onClose={() => setSessionMessage('')} className="mt-4">{sessionMessage}</Alert>}
             <label className="mt-4 block text-sm font-medium">Current password
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full sm:max-w-sm" autoComplete="current-password"/>
             </label>
@@ -102,7 +103,7 @@ export default function SecuritySettings({ user }) {
             </form>}
             {recoveryCodes.length > 0 && <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4"><p className="font-semibold">Save these recovery codes. They are shown only once.</p><div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">{recoveryCodes.map(c => <code key={c}>{c}</code>)}</div><button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\n'))} className="text-sm underline">Copy recovery codes</button></div>}
         </section>
-        {message && <p role="status" className="text-sm text-emerald-600">{message}</p>}
-        {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}
+        {message && <Alert type="success" onClose={() => setMessage('')}>{message}</Alert>}
+        {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
     </div>;
 }
