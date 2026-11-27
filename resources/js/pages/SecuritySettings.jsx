@@ -43,10 +43,11 @@ export default function SecuritySettings({ user }) {
             setEnabled(false); setPassword(''); setCode(''); setRecoveryCodes([]); setMessage(data.message);
         } catch (e) { setError(e.response?.data?.errors?.code?.[0] || e.response?.data?.message || 'Unable to disable 2FA.'); }
     };
-    const revoke = async key => {
+    const revoke = async (key, isCurrent) => {
         if (!password) { setError('Enter your current password first.'); return; }
         try {
             await axios.delete('/api/security/sessions/'+key, { data: { current_password: password } });
+            if (isCurrent) { window.location.reload(); return; }
             setPassword(''); await load(); setMessage('Session revoked.');
         } catch (e) { setError(e.response?.data?.message || 'Unable to revoke session.'); }
     };
@@ -69,7 +70,7 @@ export default function SecuritySettings({ user }) {
             <div className="mt-4 divide-y dark:divide-slate-700">
                 {sessions.map(s => <div key={s.key} className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
                     <div className="min-w-0"><p className="break-all text-sm font-medium">{s.user_agent} {s.is_current && <span className="text-emerald-600">(This device)</span>}</p><p className="text-xs text-slate-500">{s.ip_address || 'Unknown IP'} · {new Date(s.last_activity).toLocaleString()}</p></div>
-                    <button type="button" onClick={() => revoke(s.key)} className="self-start rounded-md border px-3 py-2 text-xs text-rose-600 dark:border-slate-700">Revoke</button>
+                    <button type="button" onClick={() => revoke(s.key, s.is_current)} className="self-start rounded-md border px-3 py-2 text-xs text-rose-600 dark:border-slate-700">Revoke</button>
                 </div>)}
                 {!sessions.length && <p className="py-4 text-sm text-slate-400">No active sessions found.</p>}
             </div>
