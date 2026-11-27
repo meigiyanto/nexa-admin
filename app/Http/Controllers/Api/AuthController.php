@@ -18,16 +18,18 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        $guard = Auth::guard('web');
+
+        if (! $guard->attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        $user = $request->user();
+        $user = $guard->user();
 
         if ($user->status !== 'active') {
-            Auth::guard('web')->logout();
+            $guard->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
@@ -43,7 +45,7 @@ class AuthController extends Controller
 
     public function user(Request $request): JsonResponse
     {
-        return $this->userResponse($request->user());
+        return $this->userResponse($request->user('web'));
     }
 
     public function logout(Request $request): JsonResponse

@@ -31,6 +31,10 @@ class AnalyticsTest extends TestCase
         ])->assertOk()
             ->assertCookie(config('session.cookie'));
 
+        $this->getJson('/api/user')
+            ->assertOk()
+            ->assertJsonPath('user.email', 'analytics-session@example.com');
+
         $this->getJson('/api/analytics?start_date=2026-11-01&end_date=2026-11-02')
             ->assertOk()
             ->assertJsonStructure(['filters', 'summary', 'registrations']);
