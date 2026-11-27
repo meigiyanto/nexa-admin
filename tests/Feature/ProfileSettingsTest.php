@@ -94,7 +94,7 @@ class ProfileSettingsTest extends TestCase
             'name' => $user->name,
             'email' => $user->email,
             'photo' => UploadedFile::fake()->create('document.pdf', 100, 'application/pdf'),
-        ])->assertUnprocessable()->assertSessionHasErrors('photo');
+        ])->assertUnprocessable()->assertJsonValidationErrors('photo');
     }
 
     public function test_guest_cannot_update_a_profile(): void
