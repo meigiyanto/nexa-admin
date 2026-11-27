@@ -1,17 +1,17 @@
 <?php
 
-use App\\Http\\Controllers\\Api\\AnalyticsController;
-use App\\Http\\Controllers\\Api\\AuthController;
-use App\\Http\\Controllers\\Api\\DashboardController;
-use App\\Http\\Controllers\\Api\\NotificationController;
-use App\\Http\\Controllers\\Api\\PermissionController;
-use App\\Http\\Controllers\\Api\\ProfileController;
-use App\\Http\\Controllers\\Api\\RoleController;
-use App\\Http\\Controllers\\Api\\SecurityController;
-use App\\Http\\Controllers\\Api\\SettingsController;
-use App\\Http\\Controllers\\Api\\UserAccessController;
-use App\\Http\\Controllers\\Api\\UserController;
-use Illuminate\\Support\\Facades\\Route;
+use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\SecurityController;
+use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\UserAccessController;
+use App\Http\Controllers\Api\UserController;
+use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])
     ->middleware(['web', 'throttle:login']);
