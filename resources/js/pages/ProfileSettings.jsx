@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Camera, KeyRound, LoaderCircle, Save, Trash2, UserRound } from 'lucide-react';
 import axios from 'axios';
 import SecuritySettings from './SecuritySettings';
+import Alert from '../components/Alert';
 
 export default function ProfileSettings({ user, onUpdated }) {
     const [name, setName] = useState(user.name || '');
@@ -100,7 +101,7 @@ export default function ProfileSettings({ user, onUpdated }) {
                             {errors.email && <span className="mt-1 block text-xs text-rose-600">{errors.email[0]}</span>}
                         </label>
                     </div>
-                    {message && <p role="status" className={`text-sm ${Object.keys(errors).length ? 'text-rose-600' : 'text-emerald-600'}`}>{message}</p>}
+                    {message && <Alert type={Object.keys(errors).length ? 'error' : 'success'} onClose={() => setMessage('')}>{message}</Alert>}
                     <div className="flex justify-end border-t pt-4 dark:border-slate-700">
                         <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60">{saving ? <LoaderCircle size={16} className="animate-spin"/> : <Save size={16}/>} Save changes</button>
                     </div>
@@ -128,7 +129,7 @@ export default function ProfileSettings({ user, onUpdated }) {
                     </div>
                     
                     <p className="text-xs text-slate-400">Use at least 8 characters. Your current password is required to authorize this change.</p>
-                    {passwordMessage && <p role="status" className={`text-sm ${Object.keys(passwordErrors).length ? 'text-rose-600' : 'text-emerald-600'}`}>{passwordMessage}</p>}
+                    {passwordMessage && <Alert type={Object.keys(passwordErrors).length ? 'error' : 'success'} onClose={() => setPasswordMessage('')}>{passwordMessage}</Alert>}
                     <div className="flex justify-end border-t pt-4 dark:border-slate-700">
                         <button type="submit" disabled={passwordSaving} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60">{passwordSaving ? <LoaderCircle size={16} className="animate-spin"/> : <KeyRound size={16}/>} Update password</button>
                     </div>
