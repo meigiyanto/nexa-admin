@@ -103,7 +103,10 @@ function Dashboard() {
     const [notice, setNotice] = useState('');
     const [loading, setLoading] = useState(true);
     const [logoutLoading, setLogoutLoading] = useState(false);
-    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('nexa-theme') === 'dark');
+    const [darkMode, setDarkMode] = useState(() => {
+        const savedTheme = localStorage.getItem('nexa-theme');
+        return savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    });
 
     useEffect(() => {
         document.documentElement.classList.toggle('dark', darkMode);
