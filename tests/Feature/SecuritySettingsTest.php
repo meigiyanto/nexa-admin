@@ -131,7 +131,7 @@ class SecuritySettingsTest extends TestCase
         }
 
         $counter = intdiv(time(), 30);
-        $message = pack('N2', intdiv($counter, 4294967296), $counter % 4294967296);
+        $message = pack('N2', 0, $counter);
         $hash = hash_hmac('sha1', $message, $key, true);
         $offset = ord($hash[19]) & 0x0f;
         $binary = ((ord($hash[$offset]) & 0x7f) << 24)
