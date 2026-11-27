@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\\Foundation\\Application;
-use Illuminate\\Foundation\\Configuration\\Exceptions;
-use Illuminate\\Http\\Request;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
