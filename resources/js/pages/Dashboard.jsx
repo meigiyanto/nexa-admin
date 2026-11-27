@@ -8,6 +8,30 @@ import AnalyticsPage from './AnalyticsPage';
 import ProfileSettings from './ProfileSettings';
 import NotificationBell from '../components/NotificationBell';
 import NotificationSettings from '../components/NotificationSettings';
+import LocalizationSettings from '../components/LocalizationSettings';
+
+const translations = {
+    Workspace: 'Ruang kerja', Overview: 'Ringkasan', Users: 'Pengguna', Roles: 'Peran', Analytics: 'Analitik', Settings: 'Pengaturan',
+    'My Profile': 'Profil Saya', 'No Access': 'Tidak Ada Akses', 'Good morning': 'Selamat pagi', 'Good afternoon': 'Selamat siang', 'Good evening': 'Selamat malam',
+    "Here's what's happening with your workspace today.": 'Berikut kondisi ruang kerja Anda hari ini.', 'Add new user': 'Tambah pengguna',
+    'Total users': 'Total pengguna', 'Active users': 'Pengguna aktif', 'New users this month': 'Pengguna baru bulan ini', 'Inactive users': 'Pengguna nonaktif',
+    'Current account overview': 'Ringkasan akun saat ini', 'User growth': 'Pertumbuhan pengguna', 'New users over the last six months': 'Pengguna baru selama enam bulan terakhir',
+    'User status': 'Status pengguna', Appearance: 'Tampilan', 'Customize how the Nexa Admin dashboard looks on this device.': 'Sesuaikan tampilan dashboard Nexa Admin pada perangkat ini.',
+    'Dark mode': 'Mode gelap', 'Use a darker color scheme across the dashboard.': 'Gunakan skema warna gelap di seluruh dashboard.',
+    'Your preference is saved in this browser and will remain active when you return.': 'Preferensi disimpan di browser ini dan tetap aktif saat Anda kembali.',
+    User: 'Pengguna', Roles: 'Peran', Status: 'Status', Joined: 'Bergabung', Actions: 'Aksi', 'No users found.': 'Pengguna tidak ditemukan.',
+    active: 'aktif', inactive: 'nonaktif', Search: 'Cari...', 'Manage access': 'Kelola akses', 'Edit user': 'Edit pengguna', 'Delete user': 'Hapus pengguna',
+};
+
+function formatUserDate(value, preferences) {
+    if (!value) return '—';
+    const locale = preferences.locale === 'id' ? 'id-ID' : 'en-US';
+    const parts = new Intl.DateTimeFormat(locale, { timeZone: preferences.timezone, day: '2-digit', month: '2-digit', year: 'numeric' })
+        .formatToParts(new Date(value)).reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
+    if (preferences.date_format === 'ymd') return `${parts.year}-${parts.month}-${parts.day}`;
+    if (preferences.date_format === 'mdy') return `${parts.month}/${parts.day}/${parts.year}`;
+    return `${parts.day}/${parts.month}/${parts.year}`;
+}
 
 const initialForm = {
     name: '', email: '', password: '', status: 'active'
@@ -108,10 +132,21 @@ function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [logoutLoading, setLogoutLoading] = useState(false);
     const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+    const [localization, setLocalization] = useState({ locale: 'en', timezone: 'Asia/Jakarta', date_format: 'dmy' });
+    const tr = value => localization.locale === 'id' ? (translations[value] || value) : value;
     const [darkMode, setDarkMode] = useState(() => {
         const savedTheme = localStorage.getItem('nexa-theme');
         return savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
     });
+
+    useEffect(() => {
+        document.documentElement.lang = localization.locale === 'id' ? 'id' : 'en';
+    }, [localization.locale]);
+
+    useEffect(() => {
+        if (!user) return;
+        axios.get('/api/settings').then(({ data }) => setLocalization(current => ({ ...current, ...data.localization_preferences }))).catch(() => {});
+    }, [user?.id]);
 
     useEffect(() => {
         document.documentElement.classList.toggle('dark', darkMode);
@@ -275,18 +310,18 @@ function Dashboard() {
 
     const can = permission => user.permissions?.includes(permission) || false;
     const navigation = [
-        {name: 'Overview', icon: LayoutDashboard, permission: 'dashboard.view'},
-        {name: 'Users', icon: Users, permission: 'users.view'},
-        {name: 'Roles', icon: ShieldCheck, permission: 'roles.view'},
-        {name: 'Analytics', icon: Activity, permission: 'analytics.view'},
-        {name: 'Settings', icon: Settings, permission: 'settings.view'}
+        {name: tr('Overview'), icon: LayoutDashboard, permission: 'dashboard.view'},
+        {name: tr('Users'), icon: Users, permission: 'users.view'},
+        {name: tr('Roles'), icon: ShieldCheck, permission: 'roles.view'},
+        {name: tr('Analytics'), icon: Activity, permission: 'analytics.view'},
+        {name: tr('Settings'), icon: Settings, permission: 'settings.view'}
     ].filter(item => can(item.permission));
 
     const cards = [
-        {label: 'Total users', value: stats.total_users, icon: Users, color: 'bg-indigo-50 text-indigo-600'},
-        {label: 'Active users', value: stats.active_users, icon: Activity, color: 'bg-emerald-50 text-emerald-600'},
-        {label: 'New users this month', value: stats.new_users, icon: ArrowUpRight, color: 'bg-amber-50 text-amber-600'},
-        {label: 'Inactive users', value: stats.inactive_users, icon: CreditCard, color: 'bg-rose-50 text-rose-600'}
+        {label: tr('Total users'), value: stats.total_users, icon: Users, color: 'bg-indigo-50 text-indigo-600'},
+        {label: tr('Active users'), value: stats.active_users, icon: Activity, color: 'bg-emerald-50 text-emerald-600'},
+        {label: tr('New users this month'), value: stats.new_users, icon: ArrowUpRight, color: 'bg-amber-50 text-amber-600'},
+        {label: tr('Inactive users'), value: stats.inactive_users, icon: CreditCard, color: 'bg-rose-50 text-rose-600'}
     ];
 
     return (
@@ -339,15 +374,15 @@ function Dashboard() {
                         <button className="hidden rounded-md p-2 text-slate-500 hover:bg-slate-100 lg:inline-flex" onClick={() => setSidebarCollapsed(value => !value)} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>{sidebarCollapsed ? <PanelLeftOpen size={19}/> : <PanelLeftClose size={19}/>}</button>
                         <button className="rounded-md p-2 text-slate-500 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu/></button>
                         <div>
-                            <p className="text-xs text-slate-400">Workspace / {page}</p>
-                            <h1 className="text-lg font-bold">{page}</h1>
+                            <p className="text-xs text-slate-400">{tr('Workspace')} / {page}</p>
+                            <h1 className="text-lg font-bold">{tr(page)}</h1>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <div className="hidden items-center gap-2 md:flex">
                             <Search size={16} className="text-slate-400"/>
-                            {/* <input className="w-36 border-0 bg-transparent p-0 text-xs focus:ring-0" placeholder="Search..."/> */}
+                            {/* <input className="w-36 border-0 bg-transparent p-0 text-xs focus:ring-0" placeholder={tr('Search')}/> */}
                             <input className="form-in" placeholder="Search..."/>
                         </div>
                         <button type="button" onClick={() => setDarkMode(value => !value)} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
@@ -388,8 +423,8 @@ function Dashboard() {
                         <>
                             <div className="mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                                 <div>
-                                    <h2 className="text-2xl font-bold tracking-tight">Good morning, {user.name.split(' ')[0]} 👋</h2>
-                                    <p className="mt-1 text-sm text-slate-500">Here's what's happening with your workspace today.</p>
+                                    <h2 className="text-2xl font-bold tracking-tight">{tr((() => { const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hourCycle: 'h23', timeZone: localization.timezone }).format(new Date())); return hour < 11 ? 'Good morning' : hour < 15 ? 'Good afternoon' : 'Good evening'; })())}, {user.name.split(' ')[0]} 👋</h2>
+                                    <p className="mt-1 text-sm text-slate-500">{tr("Here's what's happening with your workspace today.")}</p>
                                 </div>
                                 {can('users.create') && <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"><Plus size={17}/> Add new user</button>}
                             </div>
@@ -402,9 +437,9 @@ function Dashboard() {
                                             <span className={`rounded-md p-2 ${color}`}><Icon size={18}/></span>
                                         </div>
                                         <div className="mt-4 text-3xl font-bold">
-                                            {loading ? '—' : Number(value || 0).toLocaleString('en-US')}
+                                            {loading ? '—' : Number(value || 0).toLocaleString(localization.locale === 'id' ? 'id-ID' : 'en-US')}
                                         </div>
-                                        <p className="mt-2 text-xs text-slate-400">Current account overview</p>
+                                        <p className="mt-2 text-xs text-slate-400">{tr('Current account overview')}</p>
                                     </div>
                                 ))}
                             </div>
@@ -412,8 +447,8 @@ function Dashboard() {
                             <div className="mb-6 grid gap-5 xl:grid-cols-[1.65fr_1fr]">
                                 <section className="rounded-md border bg-white p-5 shadow-sm">
                                     <div className="mb-5">
-                                        <h3 className="font-bold">User growth</h3>
-                                        <p className="mt-1 text-xs text-slate-400">New users over the last six months</p>
+                                        <h3 className="font-bold">{tr('User growth')}</h3>
+                                        <p className="mt-1 text-xs text-slate-400">{tr('New users over the last six months')}</p>
                                     </div>
                                     <div className="h-64">
                                         <ResponsiveContainer width="100%" height="100%">
@@ -435,7 +470,7 @@ function Dashboard() {
                                 </section>
 
                                 <section className="rounded-md border bg-white p-5 shadow-sm">
-                                    <h3 className="font-bold">User status</h3>
+                                    <h3 className="font-bold">{tr('User status')}</h3>
                                     <p className="mt-1 text-xs text-slate-400">Current account overview</p>
                                     <div className="flex justify-center py-8">
                                         <div className="flex h-40 w-40 items-center justify-center rounded-full" style={{
@@ -485,7 +520,7 @@ function Dashboard() {
                                         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email..." className="w-full border-0 text-sm focus:ring-0"/>
                                     </div>
                                 </div>
-                                <UserTable users={users} onEdit={can('users.update') ? openEdit : undefined} onDelete={can('users.delete') ? deleteUser : undefined} onManageAccess={can('users.assign-roles') || can('users.assign-permissions') ? openAccess : undefined}/>
+                                <UserTable users={users} localization={localization} tr={tr} onEdit={can('users.update') ? openEdit : undefined} onDelete={can('users.delete') ? deleteUser : undefined} onManageAccess={can('users.assign-roles') || can('users.assign-permissions') ? openAccess : undefined}/>
                             </div>
                         </>
                     ) : page === 'Roles' ? (
@@ -496,24 +531,25 @@ function Dashboard() {
                         <div className="max-w-3xl space-y-6">
                             <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                                 <div className="mb-6">
-                                    <h2 className="text-xl font-bold">Appearance</h2>
-                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Customize how the Nexa Admin dashboard looks on this device.</p>
+                                    <h2 className="text-xl font-bold">{tr('Appearance')}</h2>
+                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{tr('Customize how the Nexa Admin dashboard looks on this device.')}</p>
                                 </div>
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-3">
                                         <span className="rounded-md bg-slate-100 p-3 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{darkMode ? <Moon size={20}/> : <Sun size={20}/>}</span>
                                         <div>
-                                            <p className="text-sm font-semibold">Dark mode</p>
-                                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Use a darker color scheme across the dashboard.</p>
+                                            <p className="text-sm font-semibold">{tr('Dark mode')}</p>
+                                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{tr('Use a darker color scheme across the dashboard.')}</p>
                                         </div>
                                     </div>
                                     <button type="button" role="switch" aria-checked={darkMode} onClick={() => setDarkMode(value => !value)} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${darkMode ? 'bg-indigo-600' : 'bg-slate-300'}`}>
                                         <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`}/>
                                     </button>
                                 </div>
-                                <p className="mt-5 text-xs text-slate-400 dark:text-slate-500">Your preference is saved in this browser and will remain active when you return.</p>
+                                <p className="mt-5 text-xs text-slate-400 dark:text-slate-500">{tr('Your preference is saved in this browser and will remain active when you return.')}</p>
                             </section>
                             <NotificationSettings canEdit={can('settings.update')}/>
+                            <LocalizationSettings canEdit={can('settings.update')} onSaved={setLocalization}/>
                         </div>
                     ) : page === 'My Profile' ? (
                         <div className="max-w-3xl space-y-5">
@@ -571,17 +607,17 @@ function Dashboard() {
     );
 }
 
-function UserTable({ users, onEdit, onDelete, onManageAccess }) {
+function UserTable({ users, localization, tr, onEdit, onDelete, onManageAccess }) {
     return (
         <div className="overflow-x-auto">
             <table className="w-full min-w-[650px] text-left text-sm">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-400">
                     <tr>
-                        <th className="px-5 py-3">User</th>
-                        <th className="px-5 py-3">Roles</th>
-                        <th className="px-5 py-3">Status</th>
-                        <th className="px-5 py-3">Joined</th>
-                        <th className="px-5 py-3 text-right">Actions</th>
+                        <th className="px-5 py-3">{tr('User')}</th>
+                        <th className="px-5 py-3">{tr('Roles')}</th>
+                        <th className="px-5 py-3">{tr('Status')}</th>
+                        <th className="px-5 py-3">{tr('Joined')}</th>
+                        <th className="px-5 py-3 text-right">{tr('Actions')}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -602,19 +638,19 @@ function UserTable({ users, onEdit, onDelete, onManageAccess }) {
                                     {item.status}
                                 </span>
                             </td>
-                            <td className="px-5 py-3 text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString()}</td>
+                            <td className="px-5 py-3 text-xs text-slate-400">{formatUserDate(item.created_at, localization)}</td>
                             <td className="px-5 py-3">
                                 <div className="flex justify-end gap-1">
-                                    {onManageAccess && <button onClick={() => onManageAccess(item)} title="Manage access" className="rounded-md p-2 text-indigo-600 hover:bg-indigo-50"><ShieldCheck size={15}/></button>}
-                                    {onEdit && <button onClick={() => onEdit(item)} title="Edit user" className="rounded-md p-2 text-slate-500 hover:bg-slate-100"><Pencil size={15}/></button>}
-                                    {onDelete && <button onClick={() => onDelete(item.id)} title="Delete user" className="rounded-md p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={15}/></button>}
+                                    {onManageAccess && <button onClick={() => onManageAccess(item)} title={tr('Manage access')} className="rounded-md p-2 text-indigo-600 hover:bg-indigo-50"><ShieldCheck size={15}/></button>}
+                                    {onEdit && <button onClick={() => onEdit(item)} title={tr('Edit user')} className="rounded-md p-2 text-slate-500 hover:bg-slate-100"><Pencil size={15}/></button>}
+                                    {onDelete && <button onClick={() => onDelete(item.id)} title={tr('Delete user')} className="rounded-md p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={15}/></button>}
                                 </div>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
-            {users.length === 0 && <p className="p-10 text-center text-sm text-slate-400">No users found.</p>}
+            {users.length === 0 && <p className="p-10 text-center text-sm text-slate-400">{tr('No users found.')}</p>}
         </div>
     );
 }
