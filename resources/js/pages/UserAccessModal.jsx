@@ -68,20 +68,20 @@ export default function UserAccessModal({ user, permissions: actorPermissions = 
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/50 p-4">
-            <section className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <section className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-md bg-white shadow-2xl">
                 <header className="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4">
                     <div className="flex items-center gap-3">
-                        <span className="rounded-lg bg-indigo-50 p-2 text-indigo-600"><ShieldCheck size={20}/></span>
+                        <span className="rounded-md bg-indigo-50 p-2 text-indigo-600"><ShieldCheck size={20}/></span>
                         <div>
                             <h2 className="font-bold text-slate-900">Manage access</h2>
                             <p className="text-xs text-slate-500">{user.name} · {user.email}</p>
                         </div>
                     </div>
-                    <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={18}/></button>
+                    <button type="button" onClick={onClose} className="rounded-md p-2 text-slate-500 hover:bg-slate-100"><X size={18}/></button>
                 </header>
 
                 <div className="space-y-6 p-6">
-                    {error && <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
+                    {error && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
                     {loading ? <p className="text-sm text-slate-500">Loading access settings...</p> : (
                         <>
                             {canAssignRoles && (
@@ -90,7 +90,7 @@ export default function UserAccessModal({ user, permissions: actorPermissions = 
                                     <p className="mb-3 text-xs text-slate-500">A user can have multiple roles. Their permissions are combined.</p>
                                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                         {roles.map(role => (
-                                            <label key={role.id} className="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm capitalize text-slate-700">
+                                            <label key={role.id} className="flex items-center gap-2 rounded-md border border-slate-200 p-3 text-sm capitalize text-slate-700">
                                                 <input type="checkbox" disabled={(role.name === 'admin' && !canAssignAdmin) || (selectedRoles.includes(role.name) && selectedRoles.length === 1)} checked={selectedRoles.includes(role.name)} onChange={() => toggleValue(role.name, selectedRoles, setSelectedRoles)} className="rounded border-slate-300 text-indigo-600"/>
                                                 {role.name}
                                                 {role.name === 'admin' && !canAssignAdmin && <span className="ml-auto text-xs text-slate-400">Restricted</span>}
@@ -106,7 +106,7 @@ export default function UserAccessModal({ user, permissions: actorPermissions = 
                                     <p className="mb-3 text-xs text-slate-500">These permissions are added directly to this user, independently of their roles.</p>
                                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                         {Object.entries(groupedPermissions).map(([group, items]) => (
-                                            <div key={group} className="rounded-lg border border-slate-200 p-3">
+                                            <div key={group} className="rounded-md border border-slate-200 p-3">
                                                 <h4 className="mb-2 text-sm font-semibold capitalize text-slate-700">{group}</h4>
                                                 <div className="space-y-2">
                                                     {items.map(permission => {
@@ -129,8 +129,8 @@ export default function UserAccessModal({ user, permissions: actorPermissions = 
                 </div>
 
                 <footer className="sticky bottom-0 flex justify-end gap-2 border-t bg-white px-6 py-4">
-                    <button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600">Cancel</button>
-                    <button type="button" disabled={loading || saving || (!canAssignRoles && !canAssignPermissions)} onClick={saveAccess} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                    <button type="button" onClick={onClose} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600">Cancel</button>
+                    <button type="button" disabled={loading || saving || (!canAssignRoles && !canAssignPermissions)} onClick={saveAccess} className="flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
                         <Save size={16}/>{saving ? 'Saving...' : 'Save access'}
                     </button>
                 </footer>

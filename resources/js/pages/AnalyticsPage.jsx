@@ -78,28 +78,28 @@ function AnalyticsPage({ canExport = false }) {
                 </div>
                 <div className="flex flex-wrap items-end gap-2">
                     <label className="text-xs font-medium text-slate-500">From
-                        <input type="date" value={startDate} max={endDate} onChange={event => setStartDate(event.target.value)} className="mt-1 block rounded-lg border-slate-200 text-sm"/>
+                        <input type="date" value={startDate} max={endDate} onChange={event => setStartDate(event.target.value)} className="mt-1 block rounded-md border-slate-200 text-sm"/>
                     </label>
                     <label className="text-xs font-medium text-slate-500">To
-                        <input type="date" value={endDate} min={startDate} max={todayString} onChange={event => setEndDate(event.target.value)} className="mt-1 block rounded-lg border-slate-200 text-sm"/>
+                        <input type="date" value={endDate} min={startDate} max={todayString} onChange={event => setEndDate(event.target.value)} className="mt-1 block rounded-md border-slate-200 text-sm"/>
                     </label>
-                    <button onClick={loadReport} disabled={loading || !startDate || !endDate} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+                    <button onClick={loadReport} disabled={loading || !startDate || !endDate} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
                         <RefreshCw size={16}/> Apply
                     </button>
-                    {canExport && <button onClick={exportReport} disabled={exporting || loading || !report} className="inline-flex items-center gap-2 rounded-lg border bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                    {canExport && <button onClick={exportReport} disabled={exporting || loading || !report} className="inline-flex items-center gap-2 rounded-md border bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50">
                         <Download size={16}/> {exporting ? 'Exporting...' : 'Export CSV'}
                     </button>}
                 </div>
             </div>
 
-            {error && <div className="mb-5 rounded-lg border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+            {error && <div className="mb-5 rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
 
             <div className="mb-6 grid gap-4 sm:grid-cols-3">
                 {cards.map(({ label, value, icon: Icon, color }) => (
-                    <section key={label} className="rounded-xl border bg-white p-5 shadow-sm">
+                    <section key={label} className="rounded-md border bg-white p-5 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-slate-500">{label}</span>
-                            <span className={'rounded-lg p-2 ' + color}><Icon size={18}/></span>
+                            <span className={'rounded-md p-2 ' + color}><Icon size={18}/></span>
                         </div>
                         <p className="mt-4 text-3xl font-bold">{loading ? '—' : Number(value).toLocaleString()}</p>
                         <p className="mt-2 text-xs text-slate-400">Selected date range</p>
@@ -107,9 +107,9 @@ function AnalyticsPage({ canExport = false }) {
                 ))}
             </div>
 
-            <section className="rounded-xl border bg-white p-5 shadow-sm">
+            <section className="rounded-md border bg-white p-5 shadow-sm">
                 <div className="mb-5 flex items-center gap-3">
-                    <span className="rounded-lg bg-indigo-50 p-2 text-indigo-600"><Activity size={18}/></span>
+                    <span className="rounded-md bg-indigo-50 p-2 text-indigo-600"><Activity size={18}/></span>
                     <div>
                         <h3 className="font-bold">Registration trend</h3>
                         <p className="mt-1 text-xs text-slate-400">New user accounts registered each day</p>
