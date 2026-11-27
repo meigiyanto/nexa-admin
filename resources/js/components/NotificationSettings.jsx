@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bell, LoaderCircle, Save, ShieldCheck, Users, Wrench } from 'lucide-react';
 import axios from 'axios';
+import Alert from './Alert';
 
 const getOptions = isId => [
     { key: 'user_activity', title: isId ? 'Aktivitas pengguna' : 'User activity', description: isId ? 'Akun baru, perubahan status akun, dan penghapusan pengguna.' : 'New accounts, account status changes, and user removals.', icon: Users },
@@ -72,8 +73,8 @@ export default function NotificationSettings({ canEdit = false, locale = 'en' })
                     ))}
                 </div>
             )}
-            {error && <p role="alert" className="mt-5 text-sm text-rose-600">{error}</p>}
-            {message && <p role="status" className="mt-5 text-sm text-emerald-600">{message}</p>}
+            {error && <Alert type="error" onClose={() => setError('')} className="mt-5">{error}</Alert>}
+            {message && <Alert type="success" onClose={() => setMessage('')} className="mt-5">{message}</Alert>}
             {canEdit && <div className="mt-6 flex justify-end border-t pt-4 dark:border-slate-700">
                 <button type="button" onClick={save} disabled={loading || saving} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60">
                     {saving ? <LoaderCircle size={16} className="animate-spin"/> : <Save size={16}/>} {isId ? 'Simpan preferensi' : 'Save preferences'}

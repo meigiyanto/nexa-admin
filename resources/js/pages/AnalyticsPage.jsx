@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Activity, Download, Users, UserCheck, UserX, RefreshCw } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import axios from 'axios';
+import Alert from '../components/Alert';
 
 function formatDate(date) {
     const year = date.getFullYear();
@@ -92,7 +93,7 @@ function AnalyticsPage({ canExport = false }) {
                 </div>
             </div>
 
-            {error && <div className="mb-5 rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+            {error && <Alert type="error" onClose={() => setError('')} className="mb-5">{error}</Alert>}
 
             <div className="mb-6 grid gap-4 sm:grid-cols-3">
                 {cards.map(({ label, value, icon: Icon, color }) => (
