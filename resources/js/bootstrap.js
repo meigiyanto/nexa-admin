@@ -28,6 +28,7 @@ window.Echo = new Echo({
     auth: {
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
+            'X-XSRF-TOKEN': decodeURIComponent(document.cookie.split('; ').find(cookie => cookie.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=') || ''),
         },
     },
 });
