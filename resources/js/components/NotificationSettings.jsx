@@ -23,7 +23,7 @@ export default function NotificationSettings({ canEdit = false, locale = 'en' })
     useEffect(() => {
         axios.get('/api/settings')
             .then(({ data }) => setPreferences(current => ({ ...current, ...data.notification_preferences })))
-            .catch(requestError => setError(requestError.response?.data?.message || 'Gagal memuat preferensi notifikasi.'))
+            .catch(requestError => setError(requestError.response?.data?.message || (isId ? 'Gagal memuat preferensi notifikasi.' : 'Unable to load notification preferences.')))
             .finally(() => setLoading(false));
     }, []);
 
@@ -37,9 +37,9 @@ export default function NotificationSettings({ canEdit = false, locale = 'en' })
         try {
             const { data } = await axios.put('/api/settings', { notification_preferences: preferences });
             setPreferences(data.notification_preferences);
-            setMessage(data.message || 'Preferensi berhasil disimpan.');
+            setMessage(isId ? 'Preferensi berhasil disimpan.' : 'Preferences saved.');
         } catch (requestError) {
-            setError(requestError.response?.data?.message || 'Gagal menyimpan preferensi notifikasi.');
+            setError(requestError.response?.data?.message || (isId ? 'Gagal menyimpan preferensi notifikasi.' : 'Unable to save notification preferences.'));
         } finally {
             setSaving(false);
         }
@@ -51,10 +51,10 @@ export default function NotificationSettings({ canEdit = false, locale = 'en' })
                 <span className="rounded-md bg-indigo-50 p-3 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300"><Bell size={20}/></span>
                 <div>
                     <h2 className="text-xl font-bold">{isId ? 'Notifikasi' : 'Notifications'}</h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Pilih aktivitas ruang kerja yang ingin ditampilkan di kotak masuk notifikasi dan pemberitahuan langsung.</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{isId ? 'Pilih aktivitas ruang kerja yang ingin ditampilkan di kotak masuk notifikasi dan pemberitahuan langsung.' : 'Choose which workspace events appear in your notification inbox and real-time alerts.'}</p>
                 </div>
             </div>
-            {loading ? <p className="py-6 text-center text-sm text-slate-400">Memuat preferensi...</p> : (
+            {loading ? <p className="py-6 text-center text-sm text-slate-400">{isId ? 'Memuat preferensi...' : 'Loading preferences...'}</p> : (
                 <div className="space-y-5">
                     {getOptions(isId).map(({ key, title, description, icon: Icon }) => (
                         <div key={key} className="flex items-center justify-between gap-4">
@@ -76,10 +76,10 @@ export default function NotificationSettings({ canEdit = false, locale = 'en' })
             {message && <p role="status" className="mt-5 text-sm text-emerald-600">{message}</p>}
             {canEdit && <div className="mt-6 flex justify-end border-t pt-4 dark:border-slate-700">
                 <button type="button" onClick={save} disabled={loading || saving} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60">
-                    {saving ? <LoaderCircle size={16} className="animate-spin"/> : <Save size={16}/>} Simpan preferensi
+                    {saving ? <LoaderCircle size={16} className="animate-spin"/> : <Save size={16}/>} {isId ? 'Simpan preferensi' : 'Save preferences'}
                 </button>
             </div>}
-            {!canEdit && <p className="mt-5 border-t pt-4 text-xs text-slate-400 dark:border-slate-700">Anda dapat melihat preferensi ini, tetapi tidak memiliki izin untuk mengubahnya.</p>}
+            {!canEdit && <p className="mt-5 border-t pt-4 text-xs text-slate-400 dark:border-slate-700">{isId ? 'Anda dapat melihat preferensi ini, tetapi tidak memiliki izin untuk mengubahnya.' : 'You can view these preferences, but you do not have permission to change them.'}</p>}
         </section>
     );
 }
