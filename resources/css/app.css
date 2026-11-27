@@ -34,3 +34,42 @@ button, input, select, textarea {
         box-shadow: none;
     }
 }
+
+
+/* Dashboard dark theme overrides */
+.dark body {
+    @apply bg-slate-950 text-slate-100;
+}
+
+@layer utilities {
+    .dark .bg-white { background-color: #0f172a; }
+    .dark .bg-slate-50 { background-color: #111827; }
+    .dark .bg-slate-100 { background-color: #1e293b; }
+    .dark .bg-slate-200 { background-color: #334155; }
+    .dark .text-slate-900 { color: #f8fafc; }
+    .dark .text-slate-800 { color: #e2e8f0; }
+    .dark .text-slate-700 { color: #cbd5e1; }
+    .dark .text-slate-600 { color: #cbd5e1; }
+    .dark .text-slate-500 { color: #94a3b8; }
+    .dark .text-slate-400 { color: #94a3b8; }
+    .dark .border, .dark .border-b, .dark .border-r, .dark .border-t, .dark .divide-y > :not([hidden]) ~ :not([hidden]) {
+        border-color: #334155;
+    }
+    .dark .bg-white\/90 { background-color: rgb(15 23 42 / 0.9); }
+    .dark .hover\:bg-slate-50:hover { background-color: #1e293b; }
+    .dark .hover\:bg-slate-100:hover { background-color: #334155; }
+    .dark .bg-indigo-50 { background-color: rgb(79 70 229 / 0.18); }
+    .dark .text-indigo-700 { color: #a5b4fc; }
+    .dark .text-indigo-600 { color: #a5b4fc; }
+    .dark .bg-emerald-50 { background-color: rgb(5 150 105 / 0.16); }
+    .dark .bg-amber-50 { background-color: rgb(217 119 6 / 0.16); }
+    .dark .bg-rose-50 { background-color: rgb(225 29 72 / 0.16); }
+    .dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    .dark select, .dark textarea {
+        background-color: #1e293b;
+        border-color: #475569;
+        color: #f1f5f9;
+    }
+    .dark input::placeholder, .dark textarea::placeholder { color: #94a3b8; }
+    .dark thead, .dark .bg-slate-50 { color-scheme: dark; }
+}
