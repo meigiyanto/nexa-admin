@@ -9,9 +9,9 @@ use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])
-    ->middleware('throttle:login');
+    ->middleware(['web', 'throttle:login']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['web', 'auth:web'])->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -35,8 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('can:users.delete');
 
     // User access management
-    Route::get('/users/{user}/access', [UserAccessController::class, 'show'])
-        ->middleware('can:users.view');
+    Route::get('/users/{user}/access', [UserAccessController::class, 'show']);
 
     Route::put('/users/{user}/roles', [UserAccessController::class, 'assignRoles'])
         ->middleware('can:users.assign-roles');

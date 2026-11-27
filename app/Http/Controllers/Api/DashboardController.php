@@ -10,16 +10,31 @@ class DashboardController extends Controller
 {
     public function __invoke(): JsonResponse
     {
-        $monthlyUsers = collect(range(5, 0))->map(function ($monthsAgo) {
+        $monthlyUsers = collect(range(5, 0))->map(function (int $monthsAgo): array {
             $date = now()->startOfMonth()->subMonths($monthsAgo);
 
             return [
                 'month' => $date->format('M'),
-                'users' => User::whereYear('created_at', $date->year)
+                'users' => User::query()
+                    ->whereYear('created_at', $date->year)
                     ->whereMonth('created_at', $date->month)
                     ->count(),
             ];
         });
+
+        $recentUsers = User::query()
+            ->with('roles:id,name')
+            ->latest()
+            ->limit(6)
+            ->get(['id', 'name', 'email', 'status', 'created_at'])
+            ->map(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->getRoleNames()->values(),
+                'status' => $user->status,
+                'created_at' => $user->created_at,
+            ]);
 
         return response()->json([
             'stats' => [
@@ -31,9 +46,7 @@ class DashboardController extends Controller
                     ->count(),
             ],
             'chart' => $monthlyUsers,
-            'recent_users' => User::latest()
-                ->limit(6)
-                ->get(['id', 'name', 'email', 'role', 'status', 'created_at']),
+            'recent_users' => $recentUsers,
         ]);
     }
 }

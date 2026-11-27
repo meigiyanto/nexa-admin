@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Spatie\Permission\Models\Permission;
 
 class PermissionController extends Controller
 {
-    public function index()
+    public function index(): JsonResponse
     {
         $permissions = Permission::query()
             ->where('guard_name', 'web')
@@ -17,7 +18,7 @@ class PermissionController extends Controller
         return response()->json([
             'data' => $permissions,
             'groups' => $permissions->groupBy(
-                fn ($permission) => explode('.', $permission->name)[0]
+                fn (Permission $permission): string => explode('.', $permission->name)[0]
             ),
         ]);
     }
