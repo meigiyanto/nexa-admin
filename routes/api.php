@@ -19,6 +19,7 @@ Route::middleware(['web', 'auth:web'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->middleware('throttle:5,1');
 
     // Notification center
     Route::get('/notifications', [NotificationController::class, 'index'])
