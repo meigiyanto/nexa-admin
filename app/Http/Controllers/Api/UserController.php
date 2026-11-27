@@ -59,7 +59,7 @@ class UserController extends Controller
             return $user;
         });
 
-        app(SystemActivityNotifier::class)->notifyAdmins(
+        app(SystemActivityNotifier::class)->notifyRecipients(
             $request->user(),
             'New user created',
             "{$user->name} ({$user->email}) was added to the workspace.",
