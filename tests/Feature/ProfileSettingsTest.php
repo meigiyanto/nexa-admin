@@ -97,6 +97,50 @@ class ProfileSettingsTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('photo');
     }
 
+    public function test_authenticated_user_can_change_password_with_the_current_password(): void
+    {
+        $user = User::factory()->create(['password' => 'old-password']);
+
+        $this->actingAs($user)->putJson('/api/profile/password', [
+            'current_password' => 'old-password',
+            'password' => 'new-password-123',
+            'password_confirmation' => 'new-password-123',
+        ])->assertOk()->assertJsonPath('message', 'Password changed successfully.');
+
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('new-password-123', $user->fresh()->password));
+    }
+
+    public function test_password_change_requires_the_correct_current_password(): void
+    {
+        $user = User::factory()->create(['password' => 'old-password']);
+
+        $this->actingAs($user)->putJson('/api/profile/password', [
+            'current_password' => 'wrong-password',
+            'password' => 'new-password-123',
+            'password_confirmation' => 'new-password-123',
+        ])->assertUnprocessable()->assertJsonValidationErrors('current_password');
+    }
+
+    public function test_password_change_requires_confirmation_and_minimum_length(): void
+    {
+        $user = User::factory()->create(['password' => 'old-password']);
+
+        $this->actingAs($user)->putJson('/api/profile/password', [
+            'current_password' => 'old-password',
+            'password' => 'short',
+            'password_confirmation' => 'different',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['password']);
+    }
+
+    public function test_guest_cannot_change_password(): void
+    {
+        $this->putJson('/api/profile/password', [
+            'current_password' => 'old-password',
+            'password' => 'new-password-123',
+            'password_confirmation' => 'new-password-123',
+        ])->assertUnauthorized();
+    }
+
     public function test_guest_cannot_update_a_profile(): void
     {
         $this->putJson('/api/profile', [

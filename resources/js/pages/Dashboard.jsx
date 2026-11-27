@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Activity, Settings, Search, Menu, X, LogOut, ChevronDown, Plus, Pencil, Trash2, ArrowUpRight, ShieldCheck, CreditCard, PanelLeftClose, PanelLeftOpen, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Search, Menu, X, LogOut, ChevronDown, Plus, Pencil, Trash2, ArrowUpRight, ShieldCheck, CreditCard, PanelLeftClose, PanelLeftOpen, Moon, Sun, UserRound } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import RolesPage from './RolesPage';
@@ -106,6 +106,7 @@ function Dashboard() {
     const [notice, setNotice] = useState('');
     const [loading, setLoading] = useState(true);
     const [logoutLoading, setLogoutLoading] = useState(false);
+    const [profileMenuOpen, setProfileMenuOpen] = useState(false);
     const [darkMode, setDarkMode] = useState(() => {
         const savedTheme = localStorage.getItem('nexa-theme');
         return savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -352,13 +353,24 @@ function Dashboard() {
                             {darkMode ? <Sun size={18}/> : <Moon size={18}/>}
                         </button>
                         {can('notifications.view') && <NotificationBell userId={user.id} canManage={can('notifications.manage')}/>}
-                        <div className="flex items-center gap-2">
-                            <Avatar name={user.name} photoUrl={user.profile_photo_url}/>
-                            <div className="hidden sm:block">
-                                <p className="text-xs font-semibold">{user.name}</p>
-                                <p className="text-xs capitalize text-slate-400">{user.roles?.join(', ') || 'No role'}</p>
-                            </div>
-                            <ChevronDown size={14} className="text-slate-400"/>
+                        <div className="relative">
+                            <button type="button" onClick={() => setProfileMenuOpen(value => !value)} aria-expanded={profileMenuOpen} aria-haspopup="menu" className="flex items-center gap-2 rounded-md p-1.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800">
+                                <Avatar name={user.name} photoUrl={user.profile_photo_url}/>
+                                <div className="hidden sm:block">
+                                    <p className="text-xs font-semibold">{user.name}</p>
+                                    <p className="text-xs capitalize text-slate-400">{user.roles?.join(', ') || 'No role'}</p>
+                                </div>
+                                <ChevronDown size={14} className={`text-slate-400 transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`}/>
+                            </button>
+                            {profileMenuOpen && <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-md border bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                                <div className="border-b px-4 py-3 dark:border-slate-700">
+                                    <p className="truncate text-sm font-semibold">{user.name}</p>
+                                    <p className="truncate text-xs text-slate-500">{user.email}</p>
+                                </div>
+                                <button type="button" role="menuitem" onClick={() => { setPage('My Profile'); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
+                                    <UserRound size={16}/> My Profile
+                                </button>
+                            </div>}
                         </div>
                     </div>
                 </header>
@@ -500,6 +512,13 @@ function Dashboard() {
                                 </div>
                                 <p className="mt-5 text-xs text-slate-400 dark:text-slate-500">Your preference is saved in this browser and will remain active when you return.</p>
                             </section>
+                        </div>
+                    ) : page === 'My Profile' ? (
+                        <div className="max-w-3xl space-y-5">
+                            <div>
+                                <h2 className="text-xl font-bold">My Profile</h2>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage your personal information and account password.</p>
+                            </div>
                             <ProfileSettings user={user} onUpdated={updatedUser => setUser(current => ({...current, ...updatedUser}))}/>
                         </div>
                     ) : (
