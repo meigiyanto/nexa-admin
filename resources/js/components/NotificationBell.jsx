@@ -46,6 +46,10 @@ export default function NotificationBell({ userId, canManage = false }) {
         if (!userId || !window.Echo) return undefined;
 
         const channel = window.Echo.private(`App.Models.User.${userId}`);
+        const connection = window.Echo.connector.pusher.connection;
+        const refreshAfterReconnect = () => loadCount();
+        connection.bind('connected', refreshAfterReconnect);
+
         channel.notification(notification => {
             const item = {
                 id: notification.id,
@@ -59,6 +63,7 @@ export default function NotificationBell({ userId, canManage = false }) {
         });
 
         return () => {
+            connection.unbind('connected', refreshAfterReconnect);
             window.Echo.leave(`App.Models.User.${userId}`);
         };
     }, [userId]);
