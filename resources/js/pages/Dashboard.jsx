@@ -423,11 +423,12 @@ function Dashboard() {
                                     </form>
                                 </div>
                             )}
-                        </div>
-                    );
-                }
-                
-                function UserTable({ users, localization, tr, onEdit, onDelete, onManageAccess }) {
+            </>}
+        </DashboardLayout>
+    );
+}
+
+function UserTable({ users, localization, tr, onEdit, onDelete, onManageAccess }) {
                     return (
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[650px] text-left text-sm">
