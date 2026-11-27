@@ -9,6 +9,7 @@ import ProfileSettings from './ProfileSettings';
 import NotificationBell from '../components/NotificationBell';
 import NotificationSettings from '../components/NotificationSettings';
 import LocalizationSettings from '../components/LocalizationSettings';
+import Alert from '../components/Alert';
 
 const translations = {
     Workspace: 'Ruang kerja', Overview: 'Ringkasan', Users: 'Pengguna', Roles: 'Peran', Analytics: 'Analitik', Settings: 'Pengaturan',
@@ -99,7 +100,7 @@ function Login({ onLogin }) {
                         <input autoFocus required value={code} onChange={event => setCode(event.target.value)} className="mb-5 w-full rounded-md form-input px-4 py-3" autoComplete="one-time-code"/>
                     </>
                 )}
-                {error && <p role="alert" className="mb-4 text-sm text-rose-600">{error}</p>}
+                {error && <Alert type="error" onClose={() => setError('')} className="mb-4">{error}</Alert>}
                 <button disabled={loading} className="w-full rounded-md bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">{loading ? 'Please wait...' : twoFactorRequired ? 'Verify and sign in' : 'Sign in'}</button>
                 {twoFactorRequired && <button type="button" onClick={() => { setTwoFactorRequired(false); setCode(''); setError(''); }} className="mt-3 w-full rounded-md border py-3 text-sm font-semibold">Back to sign in</button>}
             </form>
@@ -121,6 +122,7 @@ function Dashboard() {
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState(initialForm);
     const [notice, setNotice] = useState('');
+    const [noticeType, setNoticeType] = useState('info');
     const [loading, setLoading] = useState(true);
     const [logoutLoading, setLogoutLoading] = useState(false);
     const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -152,7 +154,7 @@ function Dashboard() {
             setChart(data.chart);
             setUsers(data.recent_users);
         } catch (error) {
-            setNotice(error.response?.data?.message || 'Unable to load dashboard.');
+            setNoticeType('error'); setNotice(error.response?.data?.message || 'Unable to load dashboard.');
         } finally {
             setLoading(false);
         }
@@ -186,7 +188,7 @@ function Dashboard() {
 
     useEffect(() => {
         if (user && page === 'Users') {
-            loadUsers().catch(() => setNotice('Unable to load users.'));
+            loadUsers().catch(() => { setNoticeType('error'); setNotice('Unable to load users.'); });
         }
     }, [user, page, search]);
 
@@ -217,7 +219,7 @@ function Dashboard() {
                 setModal(false);
                 setAccessUser(null);
             } else {
-                setNotice(error.response?.data?.message || 'Unable to sign out. Please try again.');
+                setNoticeType('error'); setNotice(error.response?.data?.message || 'Unable to sign out. Please try again.');
             }
         } finally {
             setLogoutLoading(false);
@@ -260,7 +262,7 @@ function Dashboard() {
             }
 
             setModal(false);
-            setNotice(editing ? 'User updated.' : 'User created.');
+            setNoticeType('success'); setNotice(editing ? 'User updated.' : 'User created.');
 
             if (page === 'Users') {
                 await loadUsers();
@@ -268,7 +270,7 @@ function Dashboard() {
                 await loadDashboard();
             }
         } catch (error) {
-            setNotice(error.response?.data?.message || 'Unable to save user.');
+            setNoticeType('error'); setNotice(error.response?.data?.message || 'Unable to save user.');
         }
     };
 
@@ -278,9 +280,9 @@ function Dashboard() {
         try {
             await axios.delete(`/api/users/${id}`);
             await loadUsers();
-            setNotice('User deleted successfully.');
+            setNoticeType('success'); setNotice('User deleted successfully.');
         } catch (error) {
-            setNotice(error.response?.data?.message || 'Unable to delete user.');
+            setNoticeType('error'); setNotice(error.response?.data?.message || 'Unable to delete user.');
         }
     };
 
@@ -404,12 +406,7 @@ function Dashboard() {
                 </header>
 
                 <main className="mx-auto max-w-[1440px] p-4 md:p-8">
-                    {notice && (
-                        <div className="mb-5 flex items-center justify-between rounded-md bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
-                            {notice}
-                            <button onClick={() => setNotice('')}><X size={16}/></button>
-                        </div>
-                    )}
+                    {notice && <Alert type={noticeType} onClose={() => setNotice('')} className="mb-5">{notice}</Alert>}
 
                     {page === 'Overview' ? (
                         <>
@@ -561,7 +558,7 @@ function Dashboard() {
                 </main>
             </div>
 
-            {accessUser && <UserAccessModal user={accessUser} permissions={user.permissions || []} onClose={() => setAccessUser(null)} onSaved={async () => { setAccessUser(null); if (page === 'Users') await loadUsers(); else if (can('dashboard.view')) await loadDashboard(); setNotice('User access updated successfully.'); }}/>} 
+            {accessUser && <UserAccessModal user={accessUser} permissions={user.permissions || []} onClose={() => setAccessUser(null)} onSaved={async () => { setAccessUser(null); if (page === 'Users') await loadUsers(); else if (can('dashboard.view')) await loadDashboard(); setNoticeType('success'); setNotice('User access updated successfully.'); }}/>} 
             {modal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/40 p-4">
                     <form onSubmit={saveUser} className="w-full max-w-lg rounded-md bg-white p-6 shadow-2xl">
