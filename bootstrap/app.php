@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -12,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
+    ->withMiddleware(function (Middleware $middleware): void {
+        // Register Laravel's default web and api middleware groups.
+        // API session authentication is applied explicitly in routes/api.php.
+    })
     // API routes use the web middleware group explicitly for session auth.
     // Do not enable statefulApi() here; it duplicates the session middleware.
     ->withExceptions(function (Exceptions $exceptions): void {
