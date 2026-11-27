@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Activity, Settings, Search, Menu, X, LogOut, ChevronDown, Plus, Pencil, Trash2, ArrowUpRight, ShieldCheck, CreditCard, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Search, Menu, X, LogOut, ChevronDown, Plus, Pencil, Trash2, ArrowUpRight, ShieldCheck, CreditCard, PanelLeftClose, PanelLeftOpen, Moon, Sun } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import RolesPage from './RolesPage';
@@ -103,6 +103,12 @@ function Dashboard() {
     const [notice, setNotice] = useState('');
     const [loading, setLoading] = useState(true);
     const [logoutLoading, setLogoutLoading] = useState(false);
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('nexa-theme') === 'dark');
+
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', darkMode);
+        localStorage.setItem('nexa-theme', darkMode ? 'dark' : 'light');
+    }, [darkMode]);
 
     const loadDashboard = async () => {
         try {
@@ -336,6 +342,9 @@ function Dashboard() {
                             {/* <input className="w-36 border-0 bg-transparent p-0 text-xs focus:ring-0" placeholder="Search..."/> */}
                             <input className="form-in" placeholder="Search..."/>
                         </div>
+                        <button type="button" onClick={() => setDarkMode(value => !value)} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
+                            {darkMode ? <Sun size={18}/> : <Moon size={18}/>}
+                        </button>
                         {can('notifications.view') && <NotificationBell userId={user.id} canManage={can('notifications.manage')}/>}
                         <div className="flex items-center gap-2">
                             <Avatar name={user.name}/>
@@ -464,6 +473,28 @@ function Dashboard() {
                         <RolesPage permissions={user.permissions || []}/>
                     ) : page === 'Analytics' ? (
                         <AnalyticsPage canExport={can('analytics.export')}/>
+                    ) : page === 'Settings' ? (
+                        <section className="max-w-3xl rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                            <div className="mb-6">
+                                <h2 className="text-xl font-bold">Appearance</h2>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Customize how the Nexa Admin dashboard looks on this device.</p>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="rounded-md bg-slate-100 p-3 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                        {darkMode ? <Moon size={20}/> : <Sun size={20}/>}
+                                    </span>
+                                    <div>
+                                        <p className="text-sm font-semibold">Dark mode</p>
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Use a darker color scheme across the dashboard.</p>
+                                    </div>
+                                </div>
+                                <button type="button" role="switch" aria-checked={darkMode} onClick={() => setDarkMode(value => !value)} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${darkMode ? 'bg-indigo-600' : 'bg-slate-300'}`}>
+                                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`}/>
+                                </button>
+                            </div>
+                            <p className="mt-5 text-xs text-slate-400 dark:text-slate-500">Your preference is saved in this browser and will remain active when you return.</p>
+                        </section>
                     ) : (
                         <div className="rounded-md border bg-white p-10 text-center">
                             <Settings className="mx-auto mb-3 text-slate-400"/>
