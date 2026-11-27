@@ -62,7 +62,7 @@ function Login({ onLogin }) {
                     required
                     value={form.email}
                     onChange={e => setForm({...form, email: e.target.value})}
-                    className="mb-5 w-full rounded-lg border-slate-200"
+                    className="mb-5 w-full rounded-full form-input px-4 py-3"
                 />
 
                 <label className="mb-2 block text-sm font-medium">Password</label>
@@ -71,7 +71,7 @@ function Login({ onLogin }) {
                     required
                     value={form.password}
                     onChange={e => setForm({...form, password: e.target.value})}
-                    className="mb-5 w-full rounded-lg border-slate-200"
+                    className="mb-5 w-full rounded-full form-input px-4 py-3"
                 />
 
                 {error && <p className="mb-4 text-sm text-rose-600">{error}</p>}
@@ -332,9 +332,10 @@ function Dashboard() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <div className="hidden items-center gap-2 rounded-lg border bg-slate-50 px-3 py-2 md:flex">
+                        <div className="hidden items-center gap-2 md:flex">
                             <Search size={16} className="text-slate-400"/>
-                            <input className="w-36 border-0 bg-transparent p-0 text-xs focus:ring-0" placeholder="Search..."/>
+                            {/* <input className="w-36 border-0 bg-transparent p-0 text-xs focus:ring-0" placeholder="Search..."/> */}
+                            <input className="form-in" placeholder="Search..."/>
                         </div>
                         <button className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100">
                             <Bell size={19}/>
@@ -455,7 +456,7 @@ function Dashboard() {
                             </div>
                             <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
                                 <div className="border-b p-4">
-                                    <div className="flex max-w-sm items-center gap-2 rounded-lg border px-3">
+                                    <div className="flex max-w-sm items-center gap-2 p-3">
                                         <Search size={16} className="text-slate-400"/>
                                         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email..." className="w-full border-0 text-sm focus:ring-0"/>
                                     </div>
