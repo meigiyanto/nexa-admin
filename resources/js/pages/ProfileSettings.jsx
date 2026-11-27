@@ -84,7 +84,7 @@ export default function ProfileSettings({ user, onUpdated }) {
                             {preview ? <img src={preview} alt="Profile preview" className="h-full w-full object-cover"/> : <UserRound size={34}/>}
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={choosePhoto} className="hidden"/>
+                            <input ref={inputRef    } type="file" accept="image/png,image/jpeg,image/webp" onChange={choosePhoto} className="hidden"/>
                             <button type="button" onClick={() => inputRef.current?.click()} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium dark:border-slate-700"><Camera size={16}/> Change photo</button>
                             {preview && <button type="button" onClick={() => { setPhoto(null); setPreview(null); setRemovePhoto(true); if (inputRef.current) inputRef.current.value = ''; }} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm text-rose-600 dark:border-slate-700"><Trash2 size={16}/> Remove</button>}
                             <p className="w-full text-xs text-slate-400">JPG, PNG, or WebP. Maximum file size: 2 MB.</p>
@@ -114,9 +114,10 @@ export default function ProfileSettings({ user, onUpdated }) {
                 </div>
                 <form onSubmit={submitPassword} className="space-y-4">
                     <label className="block text-sm font-medium">Current password
-                        <input type="password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} required autoComplete="current-password" className="mt-1.5 w-full"/>
+                        <input type="password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} required autoComplete="current-password" className="form-input mt-1.5 w-full"/>
                         {passwordErrors.current_password && <span className="mt-1 block text-xs text-rose-600">{passwordErrors.current_password[0]}</span>}
                     </label>
+                    
                     <div className="grid gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium">New password
                             <input type="password" value={password} onChange={event => setPassword(event.target.value)} required minLength={8} autoComplete="new-password" className="mt-1.5 w-full"/>
@@ -126,6 +127,7 @@ export default function ProfileSettings({ user, onUpdated }) {
                             <input type="password" value={passwordConfirmation} onChange={event => setPasswordConfirmation(event.target.value)} required minLength={8} autoComplete="new-password" className="mt-1.5 w-full"/>
                         </label>
                     </div>
+                    
                     <p className="text-xs text-slate-400">Use at least 8 characters. Your current password is required to authorize this change.</p>
                     {passwordMessage && <Alert type={Object.keys(passwordErrors).length ? 'error' : 'success'} onClose={() => setPasswordMessage('')}>{passwordMessage}</Alert>}
                     <div className="flex justify-end border-t pt-4 dark:border-slate-700">
