@@ -310,11 +310,11 @@ function Dashboard() {
 
     const can = permission => user.permissions?.includes(permission) || false;
     const navigation = [
-        {name: tr('Overview'), icon: LayoutDashboard, permission: 'dashboard.view'},
-        {name: tr('Users'), icon: Users, permission: 'users.view'},
-        {name: tr('Roles'), icon: ShieldCheck, permission: 'roles.view'},
-        {name: tr('Analytics'), icon: Activity, permission: 'analytics.view'},
-        {name: tr('Settings'), icon: Settings, permission: 'settings.view'}
+        {name: 'Overview', icon: LayoutDashboard, permission: 'dashboard.view'},
+        {name: 'Users', icon: Users, permission: 'users.view'},
+        {name: 'Roles', icon: ShieldCheck, permission: 'roles.view'},
+        {name: 'Analytics', icon: Activity, permission: 'analytics.view'},
+        {name: 'Settings', icon: Settings, permission: 'settings.view'}
     ].filter(item => can(item.permission));
 
     const cards = [
@@ -342,14 +342,14 @@ function Dashboard() {
                 </div>
 
                 <div className="px-4 pt-7">
-                    {!sidebarCollapsed && <p className="mb-3 px-3 text-xs font-bold uppercase tracking-wider text-slate-400">Workspace</p>}
+                    {!sidebarCollapsed && <p className="mb-3 px-3 text-xs font-bold uppercase tracking-wider text-slate-400">{tr('Workspace')}</p>}
                     {navigation.map(({name, icon: Icon}) => (
                         <button key={name} onClick={() => {
                             setPage(name);
                             setMobileOpen(false);
                         }} title={sidebarCollapsed ? name : undefined} className={`mb-1 flex w-full items-center ${sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} rounded-md py-2.5 text-sm font-medium ${page === name ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}>
                             <Icon size={18}/>
-                            {!sidebarCollapsed && name}
+                            {!sidebarCollapsed && tr(name)}
                         </button>
                     ))}
                 </div>
@@ -360,7 +360,7 @@ function Dashboard() {
                             <ShieldCheck size={17} className="text-indigo-600"/>
                             Pro workspace
                         </div>
-                        <p className="text-xs leading-5 text-slate-500">Manage your workspace and team from one place.</p>
+                        <p className="text-xs leading-5 text-slate-500">{localization.locale === 'id' ? 'Kelola ruang kerja dan tim Anda dari satu tempat.' : 'Manage your workspace and team from one place.'}</p>
                     </div>}
                     <button onClick={logout} disabled={logoutLoading} title={sidebarCollapsed ? 'Sign out' : undefined} className={`mt-4 flex w-full items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} rounded-md py-2.5 text-sm text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-wait disabled:opacity-50`}>
                         <LogOut size={18}/>{!sidebarCollapsed && (logoutLoading ? 'Signing out...' : 'Sign out')}
@@ -501,23 +501,23 @@ function Dashboard() {
                                     </div>
                                     {can('users.view') && <button onClick={() => setPage('Users')} className="text-xs font-semibold text-indigo-600">View all users →</button>}
                                 </div>
-                                <UserTable users={users.slice(0, 6)} onEdit={can('users.update') ? openEdit : undefined} onManageAccess={can('users.assign-roles') || can('users.assign-permissions') ? openAccess : undefined}/>
+                                <UserTable users={users.slice(0, 6)} localization={localization} tr={tr} onEdit={can('users.update') ? openEdit : undefined} onManageAccess={can('users.assign-roles') || can('users.assign-permissions') ? openAccess : undefined}/>
                             </section>
                         </>
                     ) : page === 'Users' ? (
                         <>
                             <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                                 <div>
-                                    <h2 className="text-2xl font-bold">Team members</h2>
-                                    <p className="mt-1 text-sm text-slate-500">Manage access and roles across your workspace.</p>
+                                    <h2 className="text-2xl font-bold">{localization.locale === 'id' ? 'Anggota tim' : 'Team members'}</h2>
+                                    <p className="mt-1 text-sm text-slate-500">{localization.locale === 'id' ? 'Kelola akses dan peran di ruang kerja Anda.' : 'Manage access and roles across your workspace.'}</p>
                                 </div>
-                                {can('users.create') && <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white"><Plus size={17}/> Add user</button>}
+                                {can('users.create') && <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white"><Plus size={17}/> {localization.locale === 'id' ? 'Tambah pengguna' : 'Add user'}</button>}
                             </div>
                             <div className="overflow-hidden rounded-md border bg-white shadow-sm">
                                 <div className="border-b p-4">
                                     <div className="flex max-w-sm items-center gap-2 p-3">
                                         <Search size={16} className="text-slate-400"/>
-                                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email..." className="w-full border-0 text-sm focus:ring-0"/>
+                                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={localization.locale === 'id' ? 'Cari nama atau email...' : 'Search name or email...'} className="w-full border-0 text-sm focus:ring-0"/>
                                     </div>
                                 </div>
                                 <UserTable users={users} localization={localization} tr={tr} onEdit={can('users.update') ? openEdit : undefined} onDelete={can('users.delete') ? deleteUser : undefined} onManageAccess={can('users.assign-roles') || can('users.assign-permissions') ? openAccess : undefined}/>
@@ -548,7 +548,7 @@ function Dashboard() {
                                 </div>
                                 <p className="mt-5 text-xs text-slate-400 dark:text-slate-500">{tr('Your preference is saved in this browser and will remain active when you return.')}</p>
                             </section>
-                            <NotificationSettings canEdit={can('settings.update')}/>
+                            <NotificationSettings canEdit={can('settings.update')} locale={localization.locale}/>
                             <LocalizationSettings canEdit={can('settings.update')} onSaved={setLocalization}/>
                         </div>
                     ) : page === 'My Profile' ? (
