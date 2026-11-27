@@ -24,7 +24,7 @@ window.Echo = new Echo({
     forceTLS: (import.meta.env.VITE_REVERB_SCHEME || window.location.protocol.replace(':', '')) === 'https',
     enabledTransports: ['ws', 'wss'],
     withCredentials: true,
-    authEndpoint: '/broadcasting/auth',
+    authEndpoint: `${apiProtocol}//${apiHost}:8000/broadcasting/auth`,
     auth: {
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
