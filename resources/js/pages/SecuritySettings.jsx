@@ -29,6 +29,13 @@ export default function SecuritySettings({ user }) {
             setEnabled(true); setSecret(''); setCode(''); setRecoveryCodes(data.recovery_codes || []); setMessage(data.message);
         } catch (e) { setError(e.response?.data?.errors?.code?.[0] || e.response?.data?.message || 'Invalid code.'); }
     };
+    const regenerate = async () => {
+        setError('');
+        try {
+            const data = (await axios.post('/api/security/two-factor/recovery-codes', { current_password: password, code })).data;
+            setRecoveryCodes(data.recovery_codes || []); setPassword(''); setCode(''); setMessage(data.message);
+        } catch (e) { setError(e.response?.data?.errors?.code?.[0] || e.response?.data?.message || 'Unable to regenerate recovery codes.'); }
+    };
     const disable = async e => {
         e.preventDefault(); setError('');
         try {
@@ -84,7 +91,7 @@ export default function SecuritySettings({ user }) {
             {enabled && <form onSubmit={disable} className="mt-4 space-y-3">
                 <label className="block text-sm font-medium">Current password<input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full sm:max-w-sm"/></label>
                 <label className="block text-sm font-medium">Authenticator or recovery code<input required value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-sm"/></label>
-                <button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button>
+                <div className="flex flex-wrap gap-2"><button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button></div>
             </form>}
             {recoveryCodes.length > 0 && <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4"><p className="font-semibold">Save these recovery codes. They are shown only once.</p><div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">{recoveryCodes.map(c => <code key={c}>{c}</code>)}</div><button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\n'))} className="text-sm underline">Copy recovery codes</button></div>}
         </section>
