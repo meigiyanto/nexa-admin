@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Models;
+namespace App\\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
+use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;
+use Illuminate\\Foundation\\Auth\\User as Authenticatable;
+use Illuminate\\Notifications\\Notifiable;
+use Laravel\\Sanctum\\HasApiTokens;
+use Spatie\\Permission\\Traits\\HasRoles;
 
 class User extends Authenticatable
 {
@@ -27,6 +27,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
@@ -36,11 +38,14 @@ class User extends Authenticatable
             'password' => 'hashed',
             'notification_preferences' => 'array',
             'localization_preferences' => 'array',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
     protected function getProfilePhotoUrlAttribute(): ?string
     {
-        return $this->profile_photo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->profile_photo_path) : null;
+        return $this->profile_photo_path ? \\Illuminate\\Support\\Facades\\Storage::disk('public')->url($this->profile_photo_path) : null;
     }
 }
