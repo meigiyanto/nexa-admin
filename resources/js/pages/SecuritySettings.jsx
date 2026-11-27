@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Alert from '../components/Alert';
 
 export default function SecuritySettings({ user }) {
     const [sessions, setSessions] = useState([]);
