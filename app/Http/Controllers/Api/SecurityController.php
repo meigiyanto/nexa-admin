@@ -7,6 +7,7 @@ use App\Services\TwoFactorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -89,7 +90,7 @@ class SecurityController extends Controller
         abort_if($user->two_factor_confirmed_at, 409, 'Two-factor authentication is already enabled.');
 
         $secret = $twoFactor->generateSecret();
-        $request->session()->put('two_factor_setup_secret', $secret);
+        $request->session()->put('two_factor_setup_secret', Crypt::encryptString($secret));
 
         return response()->json([
             'secret' => $secret,
@@ -100,7 +101,8 @@ class SecurityController extends Controller
     public function enableTwoFactor(Request $request, TwoFactorService $twoFactor): JsonResponse
     {
         $validated = $request->validate(['code' => ['required', 'string', 'size:6']]);
-        $secret = $request->session()->get('two_factor_setup_secret');
+        $encryptedSecret = $request->session()->get('two_factor_setup_secret');
+        $secret = $encryptedSecret ? Crypt::decryptString($encryptedSecret) : null;
 
         abort_unless($secret, 422, 'Start two-factor setup before confirming it.');
 
