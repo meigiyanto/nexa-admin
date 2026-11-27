@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, KeyRound, LoaderCircle, Save, Trash2, UserRound } from 'lucide-react';
 import axios from 'axios';
+import SecuritySettings from './SecuritySettings';
 
 export default function ProfileSettings({ user, onUpdated }) {
     const [name, setName] = useState(user.name || '');
@@ -41,50 +42,35 @@ export default function ProfileSettings({ user, onUpdated }) {
         setSaving(true);
         setErrors({});
         setMessage('');
-
         const payload = new FormData();
         payload.append('name', name);
         payload.append('email', email);
         if (photo) payload.append('photo', photo);
         if (removePhoto) payload.append('remove_photo', '1');
-
         try {
             const { data } = await axios.post('/api/profile', payload);
             onUpdated?.(data.user);
-            setPhoto(null);
-            setRemovePhoto(false);
-            setPreview(data.user.profile_photo_url || null);
+            setPhoto(null); setRemovePhoto(false); setPreview(data.user.profile_photo_url || null);
             setMessage(data.message || 'Profile updated successfully.');
         } catch (error) {
             if (error.response?.status === 422) setErrors(error.response.data.errors || {});
             setMessage(error.response?.data?.message || 'Unable to update profile.');
-        } finally {
-            setSaving(false);
-        }
+        } finally { setSaving(false); }
     };
 
     const submitPassword = async event => {
         event.preventDefault();
-        setPasswordSaving(true);
-        setPasswordErrors({});
-        setPasswordMessage('');
-
+        setPasswordSaving(true); setPasswordErrors({}); setPasswordMessage('');
         try {
             const { data } = await axios.put('/api/profile/password', {
-                current_password: currentPassword,
-                password,
-                password_confirmation: passwordConfirmation,
+                current_password: currentPassword, password, password_confirmation: passwordConfirmation,
             });
-            setCurrentPassword('');
-            setPassword('');
-            setPasswordConfirmation('');
+            setCurrentPassword(''); setPassword(''); setPasswordConfirmation('');
             setPasswordMessage(data.message || 'Password changed successfully.');
         } catch (error) {
             if (error.response?.status === 422) setPasswordErrors(error.response.data.errors || {});
             setPasswordMessage(error.response?.data?.message || 'Unable to change password.');
-        } finally {
-            setPasswordSaving(false);
-        }
+        } finally { setPasswordSaving(false); }
     };
 
     return (
@@ -146,6 +132,7 @@ export default function ProfileSettings({ user, onUpdated }) {
                     </div>
                 </form>
             </section>
+            <SecuritySettings user={user}/>
         </div>
     );
 }
