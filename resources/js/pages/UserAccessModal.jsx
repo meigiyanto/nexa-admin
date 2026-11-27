@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ShieldCheck, X, Save } from 'lucide-react';
+import Alert from '../components/Alert';
 
 export default function UserAccessModal({ user, permissions: actorPermissions = [], onClose, onSaved }) {
     const [roles, setRoles] = useState([]);
@@ -81,7 +82,7 @@ export default function UserAccessModal({ user, permissions: actorPermissions = 
                 </header>
 
                 <div className="space-y-6 p-6">
-                    {error && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
+                    {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
                     {loading ? <p className="text-sm text-slate-500">Loading access settings...</p> : (
                         <>
                             {canAssignRoles && (
