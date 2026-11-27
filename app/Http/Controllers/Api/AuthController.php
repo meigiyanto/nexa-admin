@@ -133,6 +133,10 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
+        if (! User::where('email', $validated['email'])->where('status', 'active')->exists()) {
+            return response()->json(['message' => __('password.token')], 422);
+        }
+
         $status = Password::reset(
             $validated,
             function (User $user, string $password): void {
