@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Tests\TestCase;
 
 class NotificationCenterTest extends TestCase
@@ -148,6 +148,7 @@ class NotificationCenterTest extends TestCase
             'type' => \App\Notifications\SystemActivityNotification::class,
         ]);
     }
+
     public function test_system_activity_notifications_are_persisted_and_broadcast(): void
     {
         $user = User::factory()->make();
