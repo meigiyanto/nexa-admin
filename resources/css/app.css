@@ -52,7 +52,7 @@ button, input, select, textarea {
     .dark .border, .dark .border-b, .dark .border-r, .dark .border-t, .dark .divide-y > :not([hidden]) ~ :not([hidden]) {
         border-color: #334155;
     }
-    .dark .bg-white\\/90 { background-color: rgb(15 23 42 / 0.9); }
+    .dark .bg-white\/90 { background-color: rgb(15 23 42 / 0.9); }
     .dark .hover\\:bg-slate-50:hover { background-color: #1e293b; }
     .dark .hover\\:bg-slate-100:hover { background-color: #334155; }
     .dark .bg-indigo-50 { background-color: rgb(79 70 229 / 0.18); }
