@@ -404,7 +404,7 @@ function Dashboard() {
                                     <p className="truncate text-xs text-slate-500">{user.email}</p>
                                 </div>
                                 <button type="button" role="menuitem" onClick={() => { setPage('My Profile'); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
-                                    <UserRound size={16}/> My Profile
+                                    <UserRound size={16}/> {tr('My Profile')}
                                 </button>
                             </div>}
                         </div>
@@ -426,7 +426,7 @@ function Dashboard() {
                                     <h2 className="text-2xl font-bold tracking-tight">{tr((() => { const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hourCycle: 'h23', timeZone: localization.timezone }).format(new Date())); return hour < 11 ? 'Good morning' : hour < 15 ? 'Good afternoon' : 'Good evening'; })())}, {user.name.split(' ')[0]} 👋</h2>
                                     <p className="mt-1 text-sm text-slate-500">{tr("Here's what's happening with your workspace today.")}</p>
                                 </div>
-                                {can('users.create') && <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"><Plus size={17}/> Add new user</button>}
+                                {can('users.create') && <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"><Plus size={17}/> {tr('Add new user')}</button>}
                             </div>
 
                             <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -497,9 +497,9 @@ function Dashboard() {
                                 <div className="flex items-center justify-between border-b px-5 py-4">
                                     <div>
                                         <h3 className="font-bold">Recent users</h3>
-                                        <p className="mt-1 text-xs text-slate-400">Latest members in your workspace</p>
+                                        <p className="mt-1 text-xs text-slate-400">{localization.locale === 'id' ? 'Anggota terbaru di ruang kerja Anda' : 'Latest members in your workspace'}</p>
                                     </div>
-                                    {can('users.view') && <button onClick={() => setPage('Users')} className="text-xs font-semibold text-indigo-600">View all users →</button>}
+                                    {can('users.view') && <button onClick={() => setPage('Users')} className="text-xs font-semibold text-indigo-600">{localization.locale === 'id' ? 'Lihat semua pengguna' : 'View all users'} →</button>}
                                 </div>
                                 <UserTable users={users.slice(0, 6)} localization={localization} tr={tr} onEdit={can('users.update') ? openEdit : undefined} onManageAccess={can('users.assign-roles') || can('users.assign-permissions') ? openAccess : undefined}/>
                             </section>
