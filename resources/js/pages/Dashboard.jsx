@@ -50,64 +50,6 @@ function Avatar({ name, photoUrl }) {
     );
 }
 
-function Login({ onLogin }) {
-    const [form, setForm] = useState({ email: '', password: '' });
-    const [twoFactorRequired, setTwoFactorRequired] = useState(false);
-    const [code, setCode] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const submit = async event => {
-        event.preventDefault(); setLoading(true); setError('');
-        try {
-            await axios.get('/sanctum/csrf-cookie');
-            const { data } = await axios.post('/api/login', form);
-            if (data.requires_two_factor) { setTwoFactorRequired(true); return; }
-            onLogin({ ...data.user, roles: data.roles || [], permissions: data.permissions || [] });
-        } catch (requestError) {
-            setError(requestError.response?.data?.errors?.email?.[0] || requestError.response?.data?.message || 'Login failed.');
-        } finally { setLoading(false); }
-    };
-
-    const verify = async event => {
-        event.preventDefault(); setLoading(true); setError('');
-        try {
-            const { data } = await axios.post('/api/login/two-factor', { code });
-            onLogin({ ...data.user, roles: data.roles || [], permissions: data.permissions || [] });
-        } catch (requestError) {
-            setError(requestError.response?.data?.errors?.code?.[0] || requestError.response?.data?.message || 'Verification failed.');
-        } finally { setLoading(false); }
-    };
-
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-            <form onSubmit={twoFactorRequired ? verify : submit} className="w-full max-w-md rounded-md border bg-white p-8 shadow-xl">
-                <div className="mb-8 flex items-center gap-3">
-                    <div className="rounded-md bg-indigo-600 p-3 text-white"><LayoutDashboard size={24}/></div>
-                    <div><h1 className="text-xl font-bold">Nexa Admin</h1><p className="text-sm text-slate-500">{twoFactorRequired ? 'Verify your identity' : 'Sign in to your workspace'}</p></div>
-                </div>
-                {!twoFactorRequired ? (
-                    <>
-                        <label className="mb-2 block text-sm font-medium">Email address</label>
-                        <input type="email" required value={form.email} onChange={event => setForm({...form, email: event.target.value})} className="mb-5 w-full rounded-md form-input px-4 py-3"/>
-                        <label className="mb-2 block text-sm font-medium">Password</label>
-                        <input type="password" required value={form.password} onChange={event => setForm({...form, password: event.target.value})} className="mb-5 w-full rounded-md form-input px-4 py-3"/>
-                    </>
-                ) : (
-                    <>
-                        <p className="mb-5 text-sm text-slate-600">Enter the six-digit code from your authenticator app, or use one unused recovery code.</p>
-                        <label className="mb-2 block text-sm font-medium">Authentication code</label>
-                        <input autoFocus required value={code} onChange={event => setCode(event.target.value)} className="mb-5 w-full rounded-md form-input px-4 py-3" autoComplete="one-time-code"/>
-                    </>
-                )}
-                {error && <Alert type="error" onClose={() => setError('')} className="mb-4">{error}</Alert>}
-                <button disabled={loading} className="w-full rounded-md bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">{loading ? 'Please wait...' : twoFactorRequired ? 'Verify and sign in' : 'Sign in'}</button>
-                {twoFactorRequired && <button type="button" onClick={() => { setTwoFactorRequired(false); setCode(''); setError(''); }} className="mt-3 w-full rounded-md border py-3 text-sm font-semibold">Back to sign in</button>}
-            </form>
-        </div>
-    );
-}
-
 function Dashboard() {
     const [user, setUser] = useState(null);
     const [authStatus, setAuthStatus] = useState('checking');
@@ -207,6 +149,10 @@ function Dashboard() {
             active = false;
         };
     }, []);
+
+    useEffect(() => {
+        if (authStatus === 'unauthenticated') window.location.replace('/login');
+    }, [authStatus]);
 
     useEffect(() => {
         if (user && page === 'Users') {
@@ -335,22 +281,7 @@ function Dashboard() {
         );
     }
 
-    if (authStatus === 'unauthenticated') {
-        return <Login onLogin={user => {
-            setUser(user);
-            setAuthStatus('authenticated');
-            if (user.permissions?.includes('dashboard.view')) {
-                loadDashboard();
-            } else {
-                const availablePage = ['Users', 'Roles', 'Analytics'].find((page, index) => {
-                    const permission = ['users.view', 'roles.view', 'analytics.view'][index];
-                    return user.permissions?.includes(permission);
-                });
-                setPage(availablePage || 'No Access');
-                setLoading(false);
-            }
-        }}/>;
-    }
+    if (authStatus === 'unauthenticated') return null;
 
     const can = permission => user.permissions?.includes(permission) || false;
     const navigation = [
