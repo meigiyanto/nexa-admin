@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserAccessController;
 use App\Http\Controllers\Api\UserController;
@@ -16,6 +17,8 @@ Route::post('/login', [AuthController::class, 'login'])
 Route::middleware(['web', 'auth:web'])->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::post('/profile', [ProfileController::class, 'update']);
 
     // Notification center
     Route::get('/notifications', [NotificationController::class, 'index'])
