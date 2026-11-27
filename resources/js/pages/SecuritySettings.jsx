@@ -10,10 +10,12 @@ export default function SecuritySettings({ user }) {
     const [recoveryCodes, setRecoveryCodes] = useState([]);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
+    const [sessionMessage, setSessionMessage] = useState('');
+    const [sessionError, setSessionError] = useState('');
 
     const load = async () => {
         try { setSessions((await axios.get('/api/security/sessions')).data.sessions || []); }
-        catch (e) { setError(e.response?.data?.message || 'Unable to load sessions.'); }
+        catch (e) { setSessionError(e.response?.data?.message || 'Unable to load sessions.'); }
     };
     useEffect(() => { load(); }, []);
 
@@ -44,25 +46,29 @@ export default function SecuritySettings({ user }) {
         } catch (e) { setError(e.response?.data?.errors?.code?.[0] || e.response?.data?.message || 'Unable to disable 2FA.'); }
     };
     const revoke = async (key, isCurrent) => {
-        if (!password) { setError('Enter your current password first.'); return; }
+        setSessionError(''); setSessionMessage('');
+        if (!password) { setSessionError('Enter your current password first.'); return; }
         try {
             await axios.delete('/api/security/sessions/'+key, { data: { current_password: password } });
             if (isCurrent) { window.location.reload(); return; }
-            setPassword(''); await load(); setMessage('Session revoked.');
-        } catch (e) { setError(e.response?.data?.message || 'Unable to revoke session.'); }
+            setPassword(''); await load(); setSessionMessage('Session revoked.');
+        } catch (e) { setSessionError(e.response?.data?.message || 'Unable to revoke session.'); }
     };
     const revokeOthers = async () => {
-        if (!password) { setError('Enter your current password first.'); return; }
+        setSessionError(''); setSessionMessage('');
+        if (!password) { setSessionError('Enter your current password first.'); return; }
         try {
             const data = (await axios.post('/api/security/sessions/revoke-others', { current_password: password })).data;
-            setPassword(''); await load(); setMessage(data.revoked+' other session(s) revoked.');
-        } catch (e) { setError(e.response?.data?.message || 'Unable to revoke sessions.'); }
+            setPassword(''); await load(); setSessionMessage(data.revoked+' other session(s) revoked.');
+        } catch (e) { setSessionError(e.response?.data?.message || 'Unable to revoke sessions.'); }
     };
 
     return <div className="space-y-6">
         <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <h2 className="text-xl font-bold">Active sessions</h2>
             <p className="mt-1 text-sm text-slate-500">Review and revoke browsers signed in to your account.</p>
+            {sessionError && <div role="alert" className="mt-4 flex items-start justify-between gap-3 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200"><p>{sessionError}</p><button type="button" onClick={() => setSessionError('')} aria-label="Dismiss error" className="shrink-0 rounded px-2 font-semibold hover:bg-rose-100 dark:hover:bg-rose-900">×</button></div>}
+            {sessionMessage && <div role="status" className="mt-4 flex items-start justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"><p>{sessionMessage}</p><button type="button" onClick={() => setSessionMessage('')} aria-label="Dismiss success message" className="shrink-0 rounded px-2 font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900">×</button></div>}
             <label className="mt-4 block text-sm font-medium">Current password
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full sm:max-w-sm" autoComplete="current-password"/>
             </label>
