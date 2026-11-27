@@ -59,44 +59,105 @@ export default function SecuritySettings({ user }) {
         } catch (e) { setError(e.response?.data?.message || 'Unable to revoke sessions.'); }
     };
 
-    return <div className="space-y-6">
-        <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <h2 className="text-xl font-bold">Active sessions</h2>
-            <p className="mt-1 text-sm text-slate-500">Review and revoke browsers signed in to your account.</p>
-            <label className="mt-4 block text-sm font-medium">Current password
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full sm:max-w-sm" autoComplete="current-password"/>
-            </label>
-            <button type="button" onClick={revokeOthers} className="mt-3 rounded-md border px-3 py-2 text-sm font-semibold dark:border-slate-700">End all other sessions</button>
-            <div className="mt-4 divide-y dark:divide-slate-700">
-                {sessions.map(s => <div key={s.key} className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
-                    <div className="min-w-0"><p className="break-all text-sm font-medium">{s.user_agent} {s.is_current && <span className="text-emerald-600">(This device)</span>}</p><p className="text-xs text-slate-500">{s.ip_address || 'Unknown IP'} · {new Date(s.last_activity).toLocaleString()}</p></div>
-                    <button type="button" onClick={() => revoke(s.key, s.is_current)} className="self-start rounded-md border px-3 py-2 text-xs text-rose-600 dark:border-slate-700">Revoke</button>
-                </div>)}
-                {!sessions.length && <p className="py-4 text-sm text-slate-400">No active sessions found.</p>}
-            </div>
-        </section>
-        <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <h2 className="text-xl font-bold">Two-factor authentication</h2>
-            <p className="mt-1 text-sm text-slate-500">Use a TOTP authenticator app as an additional sign-in step.</p>
-            <p className="mt-3 text-sm">{enabled ? 'Two-factor authentication is enabled.' : 'Two-factor authentication is disabled.'}</p>
-            {!enabled && !secret && <form onSubmit={start} className="mt-4 space-y-3">
-                <label className="block text-sm font-medium">Current password<input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full sm:max-w-sm"/></label>
-                <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Set up authenticator</button>
-            </form>}
-            {secret && <form onSubmit={enable} className="mt-4 space-y-3">
-                <p className="text-sm">Add this key manually in your authenticator app for {user.email}:</p>
-                <code className="block break-all rounded bg-slate-100 p-3 dark:bg-slate-800">{secret}</code>
-                <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-xs"/></label>
-                <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Verify and enable</button>
-            </form>}
-            {enabled && <form onSubmit={disable} className="mt-4 space-y-3">
-                <label className="block text-sm font-medium">Current password<input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full sm:max-w-sm"/></label>
-                <label className="block text-sm font-medium">Authenticator or recovery code<input required value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-sm"/></label>
-                <div className="flex flex-wrap gap-2"><button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button></div>
-            </form>}
-            {recoveryCodes.length > 0 && <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4"><p className="font-semibold">Save these recovery codes. They are shown only once.</p><div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">{recoveryCodes.map(c => <code key={c}>{c}</code>)}</div><button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\n'))} className="text-sm underline">Copy recovery codes</button></div>}
-        </section>
-        {message && <p role="status" className="text-sm text-emerald-600">{message}</p>}
-        {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}
-    </div>;
+    return (
+        <div className="space-y-6">
+            <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h2 className="text-xl font-bold">Active sessions</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                    Review and revoke browsers signed in to your account.
+                </p>
+                <label className="mt-4 block text-sm font-medium">Current password
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full" autoComplete="current-password" />
+                </label>
+                <button type="button" onClick={revokeOthers} className="mt-3 rounded-md border px-3 py-2 text-sm font-semibold dark:border-slate-700">End all other sessions</button>
+            
+                <div className="mt-4 divide-y dark:divide-slate-700">
+                    {sessions.map(s => <div key={s.key} className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
+                        <div className="min-w-0">
+                            <p className="break-all text-sm font-medium">
+                                {s.user_agent} {s.is_current && <span className="text-emerald-600">(This device)</span>}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                                {s.ip_address || 'Unknown IP'} · {new Date(s.last_activity).toLocaleString()}
+                            </p>
+                        </div>
+                        <button type="button" onClick={() => revoke(s.key, s.is_current)} className="self-start rounded-md border px-3 py-2 text-xs text-rose-600 dark:border-slate-700">Revoke</button>
+                    </div>
+                    )}
+                    
+                    {!sessions.length && 
+                        <p className="py-4 text-sm text-slate-400">
+                            No active sessions found.
+                        </p>
+                    }
+                </div>
+            </section>
+            
+            <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h2 className="text-xl font-bold">Two-factor authentication</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                    Use a TOTP authenticator app as an additional sign-in step.
+                </p>
+                <p className="mt-3 text-sm">
+                    {enabled ? 'Two-factor authentication is enabled.': 'Two-factor authentication is disabled.'}
+                </p>
+            
+                {message && 
+                    <p role="status" className="text-sm text-emerald-600">
+                        {message}
+                    </p>
+                }
+                
+                {error && 
+                    <p role="alert" className="text-sm text-rose-600">
+                        {error}
+                    </p>
+                }
+            
+                {!enabled && !secret && 
+                    <form onSubmit={start} className="mt-4 space-y-3">
+                        <label className="block text-sm font-medium">Current password
+                            <input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full" />
+                        </label>
+                        <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Set up authenticator</button>
+                    </form>
+                }
+            
+                {secret && 
+                    <form onSubmit={enable} className="mt-4 space-y-3">
+                        <p className="text-sm">
+                            Add this key manually in your authenticator app for {user.email}:
+                        </p>
+                        <code className="block break-all rounded bg-slate-100 p-3 dark:bg-slate-800">{secret}</code>
+                        <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-xs" /></label>
+                        <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Verify and enable</button>
+                    </form>
+                }
+                
+                {enabled && 
+                    <form onSubmit={disable} className="mt-4 space-y-3">
+                        <label className="block text-sm font-medium">Current password
+                            <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full" required />
+                        </label>
+                        <label className="block text-sm font-medium">Authenticator or recovery code
+                            <input required value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-sm" />
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            <button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button>
+                        </div>
+                    </form>
+                }
+                
+                {recoveryCodes.length > 0 && 
+                    <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4">
+                        <p className="font-semibold">Save these recovery codes. They are shown only once.</p>
+                        <div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">
+                            {recoveryCodes.map(c => <code key={c}>{c}</code>)}
+                        </div>
+                        <button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\n'))} className="text-sm underline">Copy recovery codes</button>
+                    </div>
+                }
+            </section>
+        </div>
+    );
 }
