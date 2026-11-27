@@ -20,7 +20,7 @@ const translations = {
     'User status': 'Status pengguna', Appearance: 'Tampilan', 'Customize how the Nexa Admin dashboard looks on this device.': 'Sesuaikan tampilan dashboard Nexa Admin pada perangkat ini.',
     'Dark mode': 'Mode gelap', 'Use a darker color scheme across the dashboard.': 'Gunakan skema warna gelap di seluruh dashboard.',
     'Your preference is saved in this browser and will remain active when you return.': 'Preferensi disimpan di browser ini dan tetap aktif saat Anda kembali.',
-    User: 'Pengguna', Roles: 'Peran', Status: 'Status', Joined: 'Bergabung', Actions: 'Aksi', 'No users found.': 'Pengguna tidak ditemukan.',
+    User: 'Pengguna', Status: 'Status', Joined: 'Bergabung', Actions: 'Aksi', 'No users found.': 'Pengguna tidak ditemukan.',
     active: 'aktif', inactive: 'nonaktif', Search: 'Cari...', 'Manage access': 'Kelola akses', 'Edit user': 'Edit pengguna', 'Delete user': 'Hapus pengguna',
 };
 
