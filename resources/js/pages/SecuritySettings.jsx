@@ -165,7 +165,7 @@ export default function SecuritySettings({ user }) {
                             <input required value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-sm" />
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            <button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button>
+                            <button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button>
                         </div>
                     </form>
                 }
@@ -176,7 +176,7 @@ export default function SecuritySettings({ user }) {
                         <div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">
                             {recoveryCodes.map(c => <code key={c}>{c}</code>)}
                         </div>
-                        <button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\\n'))} className="text-sm underline">Copy recovery codes</button>
+                        <button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\n'))} className="text-sm underline">Copy recovery codes</button>
                     </div>
                 }
             </section>
