@@ -1,9 +1,9 @@
 <?php
 
-namespace App\\Services;
+namespace App\Services;
 
-use App\\Models\\User;
-use Illuminate\\Support\\Facades\\Hash;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class TwoFactorService
 {
@@ -29,9 +29,9 @@ class TwoFactorService
 
     public function verifyCode(string $secret, string $code): bool
     {
-        $code = preg_replace('/\\s+/', '', $code);
+        $code = preg_replace('/\s+/', '', $code);
 
-        if (! preg_match('/^\\d{6}$/', $code)) {
+        if (! preg_match('/^\d{6}$/', $code)) {
             return false;
         }
 
@@ -112,7 +112,7 @@ class TwoFactorService
         foreach (str_split($value) as $character) {
             $position = strpos(self::BASE32, $character);
             if ($position === false) {
-                throw new \\InvalidArgumentException('Invalid TOTP secret.');
+                throw new \InvalidArgumentException('Invalid TOTP secret.');
             }
             $binary .= str_pad(decbin($position), 5, '0', STR_PAD_LEFT);
         }
