@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserAccessController;
@@ -15,6 +16,20 @@ Route::post('/login', [AuthController::class, 'login'])
 Route::middleware(['web', 'auth:web'])->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Notification center
+    Route::get('/notifications', [NotificationController::class, 'index'])
+        ->middleware('can:notifications.view');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])
+        ->middleware('can:notifications.view');
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
+        ->middleware('can:notifications.view');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
+        ->middleware('can:notifications.view');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])
+        ->middleware('can:notifications.view');
+    Route::delete('/notifications', [NotificationController::class, 'destroyAll'])
+        ->middleware('can:notifications.manage');
 
     Route::get('/dashboard', DashboardController::class)
         ->middleware('can:dashboard.view');

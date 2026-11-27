@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Activity, Settings, Bell, Search, Menu, X, LogOut, ChevronDown, Plus, Pencil, Trash2, ArrowUpRight, ShieldCheck, CreditCard, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Search, Menu, X, LogOut, ChevronDown, Plus, Pencil, Trash2, ArrowUpRight, ShieldCheck, CreditCard, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import RolesPage from './RolesPage';
 import UserAccessModal from './UserAccessModal';
 import AnalyticsPage from './AnalyticsPage';
+import NotificationBell from '../components/NotificationBell';
 
 const initialForm = {
     name: '', email: '', password: '', status: 'active'
@@ -335,10 +336,7 @@ function Dashboard() {
                             {/* <input className="w-36 border-0 bg-transparent p-0 text-xs focus:ring-0" placeholder="Search..."/> */}
                             <input className="form-in" placeholder="Search..."/>
                         </div>
-                        <button className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100">
-                            <Bell size={19}/>
-                            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500"/>
-                        </button>
+                        {can('notifications.view') && <NotificationBell canManage={can('notifications.manage')}/>}
                         <div className="flex items-center gap-2">
                             <Avatar name={user.name}/>
                             <div className="hidden sm:block">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\SystemActivityNotifier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -58,6 +59,14 @@ class UserController extends Controller
             return $user;
         });
 
+        app(SystemActivityNotifier::class)->notifyRecipients(
+            $request->user(),
+            'New user created',
+            "{$user->name} ({$user->email}) was added to the workspace.",
+            'user.created',
+            '/users',
+        );
+
         return response()->json([
             'user' => $this->userData($user->load('roles:id,name')),
         ], 201);
@@ -98,7 +107,18 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
+        $originalStatus = $user->status;
         $user->update($validated);
+
+        if ($originalStatus !== $user->status) {
+            app(SystemActivityNotifier::class)->notifyRecipients(
+                $request->user(),
+                'User status changed',
+                "{$user->name} was {$user->status}.",
+                'user.status.updated',
+                '/users',
+            );
+        }
 
         return response()->json([
             'user' => $this->userData($user->fresh()->load('roles:id,name')),
@@ -117,7 +137,16 @@ class UserController extends Controller
             );
         }
 
+        $deletedName = $user->name;
         $user->delete();
+
+        app(SystemActivityNotifier::class)->notifyRecipients(
+            $request->user(),
+            'User deleted',
+            "{$deletedName} was removed from the workspace.",
+            'user.deleted',
+            '/users',
+        );
 
         return response()->json(['message' => 'User deleted successfully.']);
     }
