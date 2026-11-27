@@ -107,9 +107,10 @@ function Login({ onLogin }) {
         </div>
     );
 }
-
 function Dashboard() {
     const [user, setUser] = useState(null);
+    const [authStatus, setAuthStatus] = useState('checking');
+    const [authError, setAuthError] = useState('');
     const [page, setPage] = useState('Overview');
     const [mobileOpen, setMobileOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -169,9 +170,15 @@ function Dashboard() {
     };
 
     useEffect(() => {
+        let active = true;
+
         axios.get('/api/user')
             .then(({ data }) => {
+                if (!active) return;
+
                 setUser({ ...data.user, roles: data.roles || [], permissions: data.permissions || [] });
+                setAuthStatus('authenticated');
+
                 if ((data.permissions || []).includes('dashboard.view')) {
                     loadDashboard();
                 } else {
@@ -183,7 +190,21 @@ function Dashboard() {
                     setLoading(false);
                 }
             })
-            .catch(() => setLoading(false));
+            .catch(error => {
+                if (!active) return;
+
+                if (error.response?.status === 401) {
+                    setAuthStatus('unauthenticated');
+                    return;
+                }
+
+                setAuthError(error.response?.data?.message || 'Unable to verify your session. Please try again.');
+                setAuthStatus('error');
+            });
+
+        return () => {
+            active = false;
+        };
     }, []);
 
     useEffect(() => {
@@ -200,6 +221,7 @@ function Dashboard() {
         try {
             await axios.post('/api/logout');
             setUser(null);
+            setAuthStatus('unauthenticated');
             setPage('Overview');
             setStats({});
             setChart([]);
@@ -211,6 +233,7 @@ function Dashboard() {
             if (error.response?.status === 401) {
                 // The server already considers this browser unauthenticated.
                 setUser(null);
+                setAuthStatus('unauthenticated');
                 setPage('Overview');
                 setStats({});
                 setChart([]);
@@ -286,9 +309,35 @@ function Dashboard() {
         }
     };
 
-    if (!user) {
+    if (authStatus === 'checking') {
+        return (
+            <div role="status" aria-live="polite" className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                <div className="flex items-center gap-3 text-sm">
+                    <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"/>
+                    Restoring your session...
+                </div>
+            </div>
+        );
+    }
+
+    if (authStatus === 'error') {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
+                <div className="w-full max-w-md rounded-md border bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <h1 className="text-lg font-bold text-slate-900 dark:text-white">Unable to verify your session</h1>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{authError}</p>
+                    <button onClick={() => window.location.reload()} className="mt-6 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+                        Try again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (authStatus === 'unauthenticated') {
         return <Login onLogin={user => {
             setUser(user);
+            setAuthStatus('authenticated');
             if (user.permissions?.includes('dashboard.view')) {
                 loadDashboard();
             } else {
