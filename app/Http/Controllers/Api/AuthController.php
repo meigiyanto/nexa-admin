@@ -76,8 +76,15 @@ class AuthController extends Controller
         $userId = $request->session()->get('two_factor_login_user_id');
         $expiresAt = $request->session()->get('two_factor_login_expires_at');
 
-        abort_unless($userId && $expiresAt && now()->timestamp <= $expiresAt, 422,
-            'The two-factor login challenge has expired. Please sign in again.');
+        if (! $userId || ! $expiresAt || now()->timestamp > $expiresAt) {
+            $request->session()->forget([
+                'two_factor_login_user_id',
+                'two_factor_login_remember',
+                'two_factor_login_expires_at',
+            ]);
+
+            abort(422, 'The two-factor login challenge has expired. Please sign in again.');
+        }
 
         $user = User::find($userId);
 
