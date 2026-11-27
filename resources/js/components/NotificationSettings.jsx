@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Bell, LoaderCircle, Save, ShieldCheck, Users, Wrench } from 'lucide-react';
 import axios from 'axios';
 
-const options = [
-    { key: 'user_activity', title: 'User activity', description: 'New accounts, account status changes, and user removals.', icon: Users },
-    { key: 'access_changes', title: 'Access changes', description: 'Role assignments and permission updates.', icon: ShieldCheck },
-    { key: 'system_updates', title: 'System updates', description: 'Important platform and workspace announcements.', icon: Wrench },
+const getOptions = isId => [
+    { key: 'user_activity', title: isId ? 'Aktivitas pengguna' : 'User activity', description: isId ? 'Akun baru, perubahan status akun, dan penghapusan pengguna.' : 'New accounts, account status changes, and user removals.', icon: Users },
+    { key: 'access_changes', title: isId ? 'Perubahan akses' : 'Access changes', description: isId ? 'Penetapan role dan pembaruan permission.' : 'Role assignments and permission updates.', icon: ShieldCheck },
+    { key: 'system_updates', title: isId ? 'Pembaruan sistem' : 'System updates', description: isId ? 'Pengumuman penting platform dan ruang kerja.' : 'Important platform and workspace announcements.', icon: Wrench },
 ];
 
-export default function NotificationSettings({ canEdit = false }) {
+export default function NotificationSettings({ canEdit = false, locale = 'en' }) {
+    const isId = locale === 'id';
     const [preferences, setPreferences] = useState({
         user_activity: true,
         access_changes: true,
@@ -22,7 +23,7 @@ export default function NotificationSettings({ canEdit = false }) {
     useEffect(() => {
         axios.get('/api/settings')
             .then(({ data }) => setPreferences(current => ({ ...current, ...data.notification_preferences })))
-            .catch(requestError => setError(requestError.response?.data?.message || 'Unable to load notification preferences.'))
+            .catch(requestError => setError(requestError.response?.data?.message || 'Gagal memuat preferensi notifikasi.'))
             .finally(() => setLoading(false));
     }, []);
 
@@ -36,9 +37,9 @@ export default function NotificationSettings({ canEdit = false }) {
         try {
             const { data } = await axios.put('/api/settings', { notification_preferences: preferences });
             setPreferences(data.notification_preferences);
-            setMessage(data.message || 'Preferences saved.');
+            setMessage(data.message || 'Preferensi berhasil disimpan.');
         } catch (requestError) {
-            setError(requestError.response?.data?.message || 'Unable to save notification preferences.');
+            setError(requestError.response?.data?.message || 'Gagal menyimpan preferensi notifikasi.');
         } finally {
             setSaving(false);
         }
@@ -49,13 +50,13 @@ export default function NotificationSettings({ canEdit = false }) {
             <div className="mb-6 flex items-start gap-3">
                 <span className="rounded-md bg-indigo-50 p-3 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300"><Bell size={20}/></span>
                 <div>
-                    <h2 className="text-xl font-bold">Notifications</h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Choose which workspace events appear in your notification inbox and real-time alerts.</p>
+                    <h2 className="text-xl font-bold">{isId ? 'Notifikasi' : 'Notifications'}</h2>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Pilih aktivitas ruang kerja yang ingin ditampilkan di kotak masuk notifikasi dan pemberitahuan langsung.</p>
                 </div>
             </div>
-            {loading ? <p className="py-6 text-center text-sm text-slate-400">Loading preferences...</p> : (
+            {loading ? <p className="py-6 text-center text-sm text-slate-400">Memuat preferensi...</p> : (
                 <div className="space-y-5">
-                    {options.map(({ key, title, description, icon: Icon }) => (
+                    {getOptions(isId).map(({ key, title, description, icon: Icon }) => (
                         <div key={key} className="flex items-center justify-between gap-4">
                             <div className="flex min-w-0 items-start gap-3">
                                 <span className="mt-0.5 rounded-md bg-slate-100 p-2 text-slate-500 dark:bg-slate-800 dark:text-slate-300"><Icon size={17}/></span>
@@ -75,10 +76,10 @@ export default function NotificationSettings({ canEdit = false }) {
             {message && <p role="status" className="mt-5 text-sm text-emerald-600">{message}</p>}
             {canEdit && <div className="mt-6 flex justify-end border-t pt-4 dark:border-slate-700">
                 <button type="button" onClick={save} disabled={loading || saving} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60">
-                    {saving ? <LoaderCircle size={16} className="animate-spin"/> : <Save size={16}/>} Save preferences
+                    {saving ? <LoaderCircle size={16} className="animate-spin"/> : <Save size={16}/>} Simpan preferensi
                 </button>
             </div>}
-            {!canEdit && <p className="mt-5 border-t pt-4 text-xs text-slate-400 dark:border-slate-700">You can view these preferences, but you do not have permission to change them.</p>}
+            {!canEdit && <p className="mt-5 border-t pt-4 text-xs text-slate-400 dark:border-slate-700">Anda dapat melihat preferensi ini, tetapi tidak memiliki izin untuk mengubahnya.</p>}
         </section>
     );
 }
