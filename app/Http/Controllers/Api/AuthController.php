@@ -20,6 +20,12 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        $request->session()->forget([
+            'two_factor_login_user_id',
+            'two_factor_login_remember',
+            'two_factor_login_expires_at',
+        ]);
+
         $user = User::where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
@@ -59,6 +65,8 @@ class AuthController extends Controller
 
     public function verifyTwoFactor(Request $request, TwoFactorService $twoFactor): JsonResponse
     {
+        abort_if(Auth::guard('web')->check(), 409, 'You are already signed in.');
+
         $validated = $request->validate([
             'code' => ['required', 'string', 'min:6', 'max:32'],
         ]);
