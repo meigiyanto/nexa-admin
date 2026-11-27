@@ -13,6 +13,8 @@ export default defineConfig({
     server: {
         watch: {
             ignored: [
+                '**/storage/**',
+                '**/bootstrap/cache/**',
                 '**/.agents/**',
                 '**/.claude/**',
                 '**/.cursor/**',
