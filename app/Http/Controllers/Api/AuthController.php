@@ -35,6 +35,9 @@ class AuthController extends Controller
         }
 
         if ($user->two_factor_confirmed_at && $user->two_factor_secret) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
             $request->session()->regenerate();
             $request->session()->put([
                 'two_factor_login_user_id' => $user->id,
