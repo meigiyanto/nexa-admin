@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -62,7 +63,7 @@ class AuthController extends Controller
     private function userResponse(User $user): JsonResponse
     {
         return response()->json([
-            'user' => $user->only(['id', 'name', 'email', 'status']),
+            'user' => [...$user->only(['id', 'name', 'email', 'status']), 'profile_photo_url' => $user->profile_photo_url],
             'roles' => $user->getRoleNames()->values(),
             'permissions' => $user->getAllPermissions()->pluck('name')->values(),
         ]);
