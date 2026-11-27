@@ -14,6 +14,7 @@ export default function SecuritySettings({ user }) {
     const [error, setError] = useState('');
     const [copyStatus, setCopyStatus] = useState('');
     const [recoveryCopyStatus, setRecoveryCopyStatus] = useState('');
+    const [isRegenerating, setIsRegenerating] = useState(false);
     const load = async () => {
         try { setSessions((await axios.get('/api/security/sessions')).data.sessions || []); }
         catch (e) { setSessionError(e.response?.data?.message || 'Unable to load sessions.'); }
@@ -67,11 +68,13 @@ export default function SecuritySettings({ user }) {
         } catch (e) { setError(e.response?.data?.errors?.code?.[0] || e.response?.data?.message || 'Invalid code.'); }
     };
     const regenerate = async () => {
-        setError('');
+        if (isRegenerating) return;
+        setIsRegenerating(true); setError(''); setMessage('');
         try {
             const data = (await axios.post('/api/security/two-factor/recovery-codes', { current_password: password, code })).data;
-            setRecoveryCodes(data.recovery_codes || []); setPassword(''); setCode(''); setMessage(data.message);
+            setRecoveryCodes(data.recovery_codes || []); setRecoveryCopyStatus(''); setPassword(''); setCode(''); setMessage(data.message || 'Recovery codes regenerated successfully.');
         } catch (e) { setError(e.response?.data?.errors?.code?.[0] || e.response?.data?.message || 'Unable to regenerate recovery codes.'); }
+        finally { setIsRegenerating(false); }
     };
     const disable = async e => {
         e.preventDefault(); setError('');
@@ -161,7 +164,7 @@ export default function SecuritySettings({ user }) {
                         </p>
                         <code className="block break-all rounded bg-slate-100 p-3 dark:bg-slate-800">{secret}</code>
                         <div className="flex flex-wrap items-center gap-3">
-                            <button type="button" onClick={copySetupKey} className="text-sm font-semibold text-indigo-600 underline dark:text-indigo-400">{copyStatus === 'Setup key copied!' ? 'Copied!' : 'Copy setup key'}</button>
+                            <button type="button" onClick={copySetupKey} className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 underline dark:text-indigo-400"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>{copyStatus === 'Setup key copied!' ? 'Copied!' : 'Copy setup key'}</button>
                             {copyStatus && <span role="status" aria-live="polite" className={copyStatus === 'Setup key copied!' ? 'text-sm text-emerald-600' : 'text-sm text-rose-600'}>{copyStatus}</span>}
                         </div>
                         <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full" /></label>
@@ -178,8 +181,9 @@ export default function SecuritySettings({ user }) {
                             <input required value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-sm" />
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            <button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button>
+                            <button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\d{6}$/.test(code) || isRegenerating} className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700">{isRegenerating && <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-4 w-4 animate-spin"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity=".25" strokeWidth="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>}{isRegenerating ? 'Generating...' : 'Regenerate recovery codes'}</button>
                         </div>
+                        <p className="text-xs text-slate-500">Enter your current password and a valid six-digit authenticator code to regenerate recovery codes.</p>
                     </form>
                 }
                 
@@ -190,7 +194,7 @@ export default function SecuritySettings({ user }) {
                             {recoveryCodes.map(c => <code key={c}>{c}</code>)}
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
-                            <button type="button" onClick={copyRecoveryCodes} className="text-sm underline">{recoveryCopyStatus === 'Recovery codes copied!' ? 'Copied!' : 'Copy recovery codes'}</button>
+                            <button type="button" onClick={copyRecoveryCodes} className="inline-flex items-center gap-2 text-sm underline"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>{recoveryCopyStatus === 'Recovery codes copied!' ? 'Copied!' : 'Copy recovery codes'}</button>
                             {recoveryCopyStatus && <span role="status" aria-live="polite" className={recoveryCopyStatus === 'Recovery codes copied!' ? 'text-sm text-emerald-600' : 'text-sm text-rose-600'}>{recoveryCopyStatus}</span>}
                         </div>
                     </div>
