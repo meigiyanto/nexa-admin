@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Notification;
 
 class SystemActivityNotifier
 {
-    public function notifyAdmins(
+    public function notifyRecipients(
         User $actor,
         string $title,
         string $message,
