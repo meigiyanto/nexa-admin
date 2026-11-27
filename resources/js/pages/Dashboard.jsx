@@ -109,7 +109,6 @@ function Login({ onLogin }) {
 }
 
 function Dashboard() {
-
     const [user, setUser] = useState(null);
     const [authStatus, setAuthStatus] = useState('checking');
     const [authError, setAuthError] = useState('');
@@ -219,6 +218,7 @@ function Dashboard() {
         if (logoutLoading) return;
         setLogoutLoading(true);
         setNotice('');
+
         try {
             await axios.post('/api/logout');
             setUser(null);
@@ -679,3 +679,19 @@ function UserTable({ users, localization, tr, onEdit, onDelete, onManageAccess }
                             </td>
                             <td className="px-5 py-3 text-xs text-slate-400">{formatUserDate(item.created_at, localization)}</td>
                             <td className="px-5 py-3">
+                                <div className="flex justify-end gap-1">
+                                    {onManageAccess && <button onClick={() => onManageAccess(item)} title={tr('Manage access')} className="rounded-md p-2 text-indigo-600 hover:bg-indigo-50"><ShieldCheck size={15}/></button>}
+                                    {onEdit && <button onClick={() => onEdit(item)} title={tr('Edit user')} className="rounded-md p-2 text-slate-500 hover:bg-slate-100"><Pencil size={15}/></button>}
+                                    {onDelete && <button onClick={() => onDelete(item.id)} title={tr('Delete user')} className="rounded-md p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={15}/></button>}
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            {users.length === 0 && <p className="p-10 text-center text-sm text-slate-400">{tr('No users found.')}</p>}
+        </div>
+    );
+}
+
+export default Dashboard;
