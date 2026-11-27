@@ -88,7 +88,7 @@ class UserAccessController extends Controller
 
         $user->syncRoles($roles);
 
-        app(SystemActivityNotifier::class)->notifyAdmins(
+        app(SystemActivityNotifier::class)->notifyRecipients(
             $request->user(),
             'User roles updated',
             "Roles for {$user->name} are now: ".$roles->pluck('name')->join(', ').'.',
