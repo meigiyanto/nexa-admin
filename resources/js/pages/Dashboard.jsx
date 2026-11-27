@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import axios from 'axios';
 import RolesPage from './RolesPage';
 import UserAccessModal from './UserAccessModal';
+import AnalyticsPage from './AnalyticsPage';
 
 const initialForm = {
     name: '', email: '', password: '', status: 'active'
@@ -466,6 +467,8 @@ function Dashboard() {
                         </>
                     ) : page === 'Roles' ? (
                         <RolesPage permissions={user.permissions || []}/>
+                    ) : page === 'Analytics' ? (
+                        <AnalyticsPage canExport={can('analytics.export')}/>
                     ) : (
                         <div className="rounded-xl border bg-white p-10 text-center">
                             <Settings className="mx-auto mb-3 text-slate-400"/>
