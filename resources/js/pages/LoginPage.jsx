@@ -105,7 +105,7 @@ export default function LoginPage() {
                     </>
                 ) : (
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Authentication code
-                        <input autoFocus required autoComplete="one-time-code" value={code} onChange={event => setCode(event.target.value)} className="form-input mt-2 w-full rounded-md px-4 py-3"/>
+                        <input autoFocus required autoComplete="one-time-code" inputMode="numeric" maxLength={32} value={code} onChange={event => setCode(event.target.value)} className="form-input mt-2 w-full rounded-md px-4 py-3"/>
                     </label>
                 )}
                 {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
