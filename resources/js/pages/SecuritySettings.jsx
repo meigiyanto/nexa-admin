@@ -13,32 +13,45 @@ export default function SecuritySettings({ user }) {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [copyStatus, setCopyStatus] = useState('');
+    const [recoveryCopyStatus, setRecoveryCopyStatus] = useState('');
     const load = async () => {
         try { setSessions((await axios.get('/api/security/sessions')).data.sessions || []); }
         catch (e) { setSessionError(e.response?.data?.message || 'Unable to load sessions.'); }
     };
     useEffect(() => { load(); }, []);
 
+    const copyText = async value => {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(value);
+            return;
+        }
+        const input = document.createElement('textarea');
+        input.value = value;
+        input.setAttribute('readonly', '');
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(input);
+        if (!copied) throw new Error('Clipboard copy was rejected.');
+    };
     const copySetupKey = async () => {
         setCopyStatus('');
         try {
-            if (navigator.clipboard?.writeText) {
-                await navigator.clipboard.writeText(secret);
-            } else {
-                const input = document.createElement('textarea');
-                input.value = secret;
-                input.setAttribute('readonly', '');
-                input.style.position = 'fixed';
-                input.style.opacity = '0';
-                document.body.appendChild(input);
-                input.select();
-                const copied = document.execCommand('copy');
-                document.body.removeChild(input);
-                if (!copied) throw new Error('Clipboard copy was rejected.');
-            }
+            await copyText(secret);
             setCopyStatus('Setup key copied!');
         } catch (e) {
             setCopyStatus('Copy failed. Select the setup key and copy it manually.');
+        }
+    };
+    const copyRecoveryCodes = async () => {
+        setRecoveryCopyStatus('');
+        try {
+            await copyText(recoveryCodes.join('\n'));
+            setRecoveryCopyStatus('Recovery codes copied!');
+        } catch (e) {
+            setRecoveryCopyStatus('Copy failed. Select the recovery codes and copy them manually.');
         }
     };
     const start = async e => {
@@ -176,7 +189,10 @@ export default function SecuritySettings({ user }) {
                         <div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">
                             {recoveryCodes.map(c => <code key={c}>{c}</code>)}
                         </div>
-                        <button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\n'))} className="text-sm underline">Copy recovery codes</button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <button type="button" onClick={copyRecoveryCodes} className="text-sm underline">{recoveryCopyStatus === 'Recovery codes copied!' ? 'Copied!' : 'Copy recovery codes'}</button>
+                            {recoveryCopyStatus && <span role="status" aria-live="polite" className={recoveryCopyStatus === 'Recovery codes copied!' ? 'text-sm text-emerald-600' : 'text-sm text-rose-600'}>{recoveryCopyStatus}</span>}
+                        </div>
                     </div>
                 }
             </section>
