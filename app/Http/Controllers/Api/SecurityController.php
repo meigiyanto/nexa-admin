@@ -1,17 +1,17 @@
 <?php
 
-namespace App\\Http\\Controllers\\Api;
+namespace App\Http\Controllers\Api;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\User;
-use App\\Services\\TwoFactorService;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\Auth;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Hash;
-use Illuminate\\Support\\Facades\\Schema;
-use Illuminate\\Validation\\ValidationException;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\TwoFactorService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class SecurityController extends Controller
 {
@@ -131,7 +131,7 @@ class SecurityController extends Controller
 
         abort_unless($user->two_factor_confirmed_at && $user->two_factor_secret, 409, 'Two-factor authentication is not enabled.');
 
-        $valid = preg_match('/^\\d{6}$/', $validated['code'])
+        $valid = preg_match('/^\d{6}$/', $validated['code'])
             ? $twoFactor->verifyCode($user->two_factor_secret, $validated['code'])
             : $twoFactor->consumeRecoveryCode($user, $validated['code']);
 
