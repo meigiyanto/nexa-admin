@@ -129,14 +129,15 @@ function AnalyticsPage({ canExport = false }) {
                                 </defs>
                                 <CartesianGrid stroke="#eef2f7" vertical={false}/>
                                 <XAxis dataKey="date" tickFormatter={value => value.slice(5)} axisLine={false} tickLine={false} minTickGap={24}/>
-                                <YAxis allowDecimals={false} axisLine={false} tickLine={false}/>
+                                <YAxis allowDecimals={false} domain={[0, dataMax => Math.max(dataMax, 1)]} axisLine={false} tickLine={false} allowDataOverflow={false}/>
                                 <Tooltip labelFormatter={value => new Date(value + 'T00:00:00').toLocaleDateString()}/>
-                                <Area type="monotone" dataKey="users" name="New users" stroke="#6366f1" strokeWidth={2.5} fill="url(#analyticsUserGradient)"/>
+                                <Area type="monotone" dataKey="users" name="New users" stroke="#6366f1" strokeWidth={3} dot={{ r: 3, fill: '#6366f1', strokeWidth: 0 }} activeDot={{ r: 6 }} fill="url(#analyticsUserGradient)"/>
                             </AreaChart>
                         </ResponsiveContainer>
                     )}
                 </div>
-                {!loading && report?.registrations?.length === 0 && <p className="text-center text-sm text-slate-400">No registrations found for this period.</p>}
+                {!loading && report?.registrations?.length > 0 && report.registrations.every(item => Number(item.users) === 0) && <p className="mt-3 text-center text-sm text-slate-500">No new users registered in this period. The chart shows zero registrations for each day.</p>}
+                {!loading && report?.registrations?.length === 0 && <p className="mt-3 text-center text-sm text-slate-400">No registration data is available for this period.</p>}
             </section>
         </div>
     );
