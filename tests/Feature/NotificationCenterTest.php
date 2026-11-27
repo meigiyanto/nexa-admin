@@ -152,7 +152,7 @@ class NotificationCenterTest extends TestCase
     public function test_system_activity_notifications_are_persisted_and_broadcast(): void
     {
         $user = User::factory()->make();
-        $notification = new \App\\Notifications\\SystemActivityNotification(
+        $notification = new \App\Notifications\SystemActivityNotification(
             'Realtime update', 'A new activity occurred.', 'test.realtime', 'System',
         );
 
