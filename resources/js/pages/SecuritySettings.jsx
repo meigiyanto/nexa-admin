@@ -12,14 +12,37 @@ export default function SecuritySettings({ user }) {
     const [recoveryCodes, setRecoveryCodes] = useState([]);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
+    const [copyStatus, setCopyStatus] = useState('');
     const load = async () => {
         try { setSessions((await axios.get('/api/security/sessions')).data.sessions || []); }
         catch (e) { setSessionError(e.response?.data?.message || 'Unable to load sessions.'); }
     };
     useEffect(() => { load(); }, []);
 
+    const copySetupKey = async () => {
+        setCopyStatus('');
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(secret);
+            } else {
+                const input = document.createElement('textarea');
+                input.value = secret;
+                input.setAttribute('readonly', '');
+                input.style.position = 'fixed';
+                input.style.opacity = '0';
+                document.body.appendChild(input);
+                input.select();
+                const copied = document.execCommand('copy');
+                document.body.removeChild(input);
+                if (!copied) throw new Error('Clipboard copy was rejected.');
+            }
+            setCopyStatus('Setup key copied!');
+        } catch (e) {
+            setCopyStatus('Copy failed. Select the setup key and copy it manually.');
+        }
+    };
     const start = async e => {
-        e.preventDefault(); setError(''); setMessage('');
+        e.preventDefault(); setError(''); setMessage(''); setCopyStatus('');
         try { const data = (await axios.post('/api/security/two-factor/setup', { current_password: password })).data; setSecret(data.secret); setSetupExpiresIn(data.expires_in_minutes || 10); setPassword(''); }
         catch (e) { setError(e.response?.data?.message || 'Unable to start setup.'); }
     };
@@ -124,7 +147,10 @@ export default function SecuritySettings({ user }) {
                             Add this key manually in your authenticator app for {user.email}. This setup expires in {setupExpiresIn} minutes.
                         </p>
                         <code className="block break-all rounded bg-slate-100 p-3 dark:bg-slate-800">{secret}</code>
-                        <button type="button" onClick={() => navigator.clipboard?.writeText(secret)} className="text-sm font-semibold text-indigo-600 underline dark:text-indigo-400">Copy setup key</button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <button type="button" onClick={copySetupKey} className="text-sm font-semibold text-indigo-600 underline dark:text-indigo-400">{copyStatus === 'Setup key copied!' ? 'Copied!' : 'Copy setup key'}</button>
+                            {copyStatus && <span role="status" aria-live="polite" className={copyStatus === 'Setup key copied!' ? 'text-sm text-emerald-600' : 'text-sm text-rose-600'}>{copyStatus}</span>}
+                        </div>
                         <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full" /></label>
                         <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Verify and enable</button>
                     </form>
@@ -139,7 +165,7 @@ export default function SecuritySettings({ user }) {
                             <input required value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-sm" />
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            <button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button>
+                            <button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button>
                         </div>
                     </form>
                 }
@@ -150,7 +176,7 @@ export default function SecuritySettings({ user }) {
                         <div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">
                             {recoveryCodes.map(c => <code key={c}>{c}</code>)}
                         </div>
-                        <button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\n'))} className="text-sm underline">Copy recovery codes</button>
+                        <button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\\n'))} className="text-sm underline">Copy recovery codes</button>
                     </div>
                 }
             </section>
