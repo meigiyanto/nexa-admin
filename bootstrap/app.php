@@ -13,7 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->statefulApi();
+        // API routes that require browser sessions explicitly use the web middleware group.
+        // Do not also wrap the API stack in Sanctum's stateful middleware, which would
+        // initialize the same cookie/session middleware a second time.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
