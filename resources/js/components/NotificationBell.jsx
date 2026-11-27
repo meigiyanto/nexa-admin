@@ -45,7 +45,7 @@ export default function NotificationBell({ userId, canManage = false }) {
     useEffect(() => {
         if (!userId || !window.Echo) return undefined;
 
-        const channel = window.Echo.private(`App.Models.User.${userId}");
+        const channel = window.Echo.private(`App.Models.User.${userId}`);
         channel.notification(notification => {
             const item = {
                 id: notification.id,
@@ -59,7 +59,7 @@ export default function NotificationBell({ userId, canManage = false }) {
         });
 
         return () => {
-            window.Echo.leave(`App.Models.User.${userId}");
+            window.Echo.leave(`App.Models.User.${userId}`);
         };
     }, [userId]);
 
