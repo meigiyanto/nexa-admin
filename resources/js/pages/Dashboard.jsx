@@ -7,6 +7,7 @@ import UserAccessModal from './UserAccessModal';
 import AnalyticsPage from './AnalyticsPage';
 import ProfileSettings from './ProfileSettings';
 import NotificationBell from '../components/NotificationBell';
+import NotificationSettings from '../components/NotificationSettings';
 
 const initialForm = {
     name: '', email: '', password: '', status: 'active'
@@ -512,6 +513,7 @@ function Dashboard() {
                                 </div>
                                 <p className="mt-5 text-xs text-slate-400 dark:text-slate-500">Your preference is saved in this browser and will remain active when you return.</p>
                             </section>
+                            <NotificationSettings canEdit={can('settings.update')}/>
                         </div>
                     ) : page === 'My Profile' ? (
                         <div className="max-w-3xl space-y-5">

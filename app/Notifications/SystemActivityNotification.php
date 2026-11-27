@@ -20,6 +20,13 @@ class SystemActivityNotification extends Notification
 
     public function via(object $notifiable): array
     {
+        $preferences = $notifiable->notification_preferences ?? [];
+        $category = $this->category();
+
+        if (($preferences[$category] ?? true) === false) {
+            return [];
+        }
+
         return ['database', 'broadcast'];
     }
 
@@ -37,5 +44,18 @@ class SystemActivityNotification extends Notification
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
         return new BroadcastMessage($this->toArray($notifiable));
+    }
+
+    private function category(): string
+    {
+        if (str_contains($this->event, '.roles.') || str_contains($this->event, '.permissions.')) {
+            return 'access_changes';
+        }
+
+        if (str_starts_with($this->event, 'user.')) {
+            return 'user_activity';
+        }
+
+        return 'system_updates';
     }
 }
