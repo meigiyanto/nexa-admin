@@ -7,12 +7,39 @@ export default function SecuritySettings({ user }) {
     const [password, setPassword] = useState('');
     const [code, setCode] = useState('');
     const [secret, setSecret] = useState('');
+    const [setupExpiresIn, setSetupExpiresIn] = useState(10);
     const [enabled, setEnabled] = useState(Boolean(user.two_factor_enabled));
     const [recoveryCodes, setRecoveryCodes] = useState([]);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
-    const [sessionMessage, setSessionMessage] = useState('');
-    const [sessionError, setSessionError] = useState('');
+    const [copied, setCopied] = useState('');
+
+    const copyToClipboard = async (value, target) => {
+        setError(''); setCopied('');
+        try {
+            if (navigator.clipboard?.writeText) {
+                try { await navigator.clipboard.writeText(value); }
+                catch {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = value; textarea.setAttribute('readonly', '');
+                    textarea.style.position = 'fixed'; textarea.style.opacity = '0';
+                    document.body.appendChild(textarea); textarea.select();
+                    const copied = document.execCommand('copy'); textarea.remove();
+                    if (!copied) throw new Error('Clipboard access denied.');
+                }
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = value; textarea.setAttribute('readonly', '');
+                textarea.style.position = 'fixed'; textarea.style.opacity = '0';
+                document.body.appendChild(textarea); textarea.select();
+                const copied = document.execCommand('copy'); textarea.remove();
+                if (!copied) throw new Error('Clipboard access unavailable.');
+            }
+            setCopied(target);
+        } catch {
+            setError('Unable to copy. Please select and copy the text manually.');
+        }
+    };
 
     const load = async () => {
         try { setSessions((await axios.get('/api/security/sessions')).data.sessions || []); }
@@ -22,7 +49,7 @@ export default function SecuritySettings({ user }) {
 
     const start = async e => {
         e.preventDefault(); setError(''); setMessage('');
-        try { setSecret((await axios.post('/api/security/two-factor/setup', { current_password: password })).data.secret); setPassword(''); }
+        try { const data = (await axios.post('/api/security/two-factor/setup', { current_password: password })).data; setSecret(data.secret); setSetupExpiresIn(data.expires_in_minutes || 10); setPassword(''); }
         catch (e) { setError(e.response?.data?.message || 'Unable to start setup.'); }
     };
     const enable = async e => {
@@ -64,46 +91,99 @@ export default function SecuritySettings({ user }) {
         } catch (e) { setSessionError(e.response?.data?.message || 'Unable to revoke sessions.'); }
     };
 
-    return <div className="space-y-6">
-        <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <h2 className="text-xl font-bold">Active sessions</h2>
-            <p className="mt-1 text-sm text-slate-500">Review and revoke browsers signed in to your account.</p>
-            {sessionError && <Alert type="error" onClose={() => setSessionError('')} className="mt-4">{sessionError}</Alert>}
-            {sessionMessage && <Alert type="success" onClose={() => setSessionMessage('')} className="mt-4">{sessionMessage}</Alert>}
-            <label className="mt-4 block text-sm font-medium">Current password
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full sm:max-w-sm" autoComplete="current-password"/>
-            </label>
-            <button type="button" onClick={revokeOthers} className="mt-3 rounded-md border px-3 py-2 text-sm font-semibold dark:border-slate-700">End all other sessions</button>
-            <div className="mt-4 divide-y dark:divide-slate-700">
-                {sessions.map(s => <div key={s.key} className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
-                    <div className="min-w-0"><p className="break-all text-sm font-medium">{s.user_agent} {s.is_current && <span className="text-emerald-600">(This device)</span>}</p><p className="text-xs text-slate-500">{s.ip_address || 'Unknown IP'} · {new Date(s.last_activity).toLocaleString()}</p></div>
-                    <button type="button" onClick={() => revoke(s.key, s.is_current)} className="self-start rounded-md border px-3 py-2 text-xs text-rose-600 dark:border-slate-700">Revoke</button>
-                </div>)}
-                {!sessions.length && <p className="py-4 text-sm text-slate-400">No active sessions found.</p>}
-            </div>
-        </section>
-        <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <h2 className="text-xl font-bold">Two-factor authentication</h2>
-            <p className="mt-1 text-sm text-slate-500">Use a TOTP authenticator app as an additional sign-in step.</p>
-            <p className="mt-3 text-sm">{enabled ? 'Two-factor authentication is enabled.' : 'Two-factor authentication is disabled.'}</p>
-            {!enabled && !secret && <form onSubmit={start} className="mt-4 space-y-3">
-                <label className="block text-sm font-medium">Current password<input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full sm:max-w-sm"/></label>
-                <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Set up authenticator</button>
-            </form>}
-            {secret && <form onSubmit={enable} className="mt-4 space-y-3">
-                <p className="text-sm">Add this key manually in your authenticator app for {user.email}:</p>
-                <code className="block break-all rounded bg-slate-100 p-3 dark:bg-slate-800">{secret}</code>
-                <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-xs"/></label>
-                <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Verify and enable</button>
-            </form>}
-            {enabled && <form onSubmit={disable} className="mt-4 space-y-3">
-                <label className="block text-sm font-medium">Current password<input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full sm:max-w-sm"/></label>
-                <label className="block text-sm font-medium">Authenticator or recovery code<input required value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-sm"/></label>
-                <div className="flex flex-wrap gap-2"><button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button></div>
-            </form>}
-            {recoveryCodes.length > 0 && <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4"><p className="font-semibold">Save these recovery codes. They are shown only once.</p><div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">{recoveryCodes.map(c => <code key={c}>{c}</code>)}</div><button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\n'))} className="text-sm underline">Copy recovery codes</button></div>}
-        </section>
-        {message && <Alert type="success" onClose={() => setMessage('')}>{message}</Alert>}
-        {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
-    </div>;
+    return (
+        <div className="space-y-6">
+            <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h2 className="text-xl font-bold">Active sessions</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                    Review and revoke browsers signed in to your account.
+                </p>
+                <label className="mt-4 block text-sm font-medium">Current password
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full" autoComplete="current-password" />
+                </label>
+                <button type="button" onClick={revokeOthers} className="mt-3 rounded-md border px-3 py-2 text-sm font-semibold dark:border-slate-700">End all other sessions</button>
+            
+                <div className="mt-4 divide-y dark:divide-slate-700">
+                    {sessions.map(s => <div key={s.key} className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
+                        <div className="min-w-0">
+                            <p className="break-all text-sm font-medium">
+                                {s.user_agent} {s.is_current && <span className="text-emerald-600">(This device)</span>}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                                {s.ip_address || 'Unknown IP'} · {new Date(s.last_activity).toLocaleString()}
+                            </p>
+                        </div>
+                        <button type="button" onClick={() => revoke(s.key, s.is_current)} className="self-start rounded-md border px-3 py-2 text-xs text-rose-600 dark:border-slate-700">Revoke</button>
+                    </div>
+                    )}
+                    
+                    {!sessions.length && 
+                        <p className="py-4 text-sm text-slate-400">
+                            No active sessions found.
+                        </p>
+                    }
+                </div>
+            </section>
+            
+            <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h2 className="text-xl font-bold">Two-factor authentication</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                    Use a TOTP authenticator app as an additional sign-in step.
+                </p>
+                <p className="mt-3 text-sm">
+                    {enabled ? 'Two-factor authentication is enabled.': 'Two-factor authentication is disabled.'}
+                </p>
+            
+                {message && <Alert type="success" onClose={() => setMessage('')}>{message}</Alert>}
+                
+                {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
+            
+                {!enabled && !secret && 
+                    <form onSubmit={start} className="mt-4 space-y-3">
+                        <label className="block text-sm font-medium">Current password
+                            <input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full" />
+                        </label>
+                        <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Set up authenticator</button>
+                    </form>
+                }
+            
+                {secret && 
+                    <form onSubmit={enable} className="mt-4 space-y-3">
+                        <p className="text-sm">
+                            Add this key manually in your authenticator app for {user.email}. This setup expires in {setupExpiresIn} minutes.
+                        </p>
+                        <code className="block break-all rounded bg-slate-100 p-3 dark:bg-slate-800">{secret}</code>
+                        <button type="button" onClick={() => copyToClipboard(secret, 'setup')} className="text-sm font-semibold text-indigo-600 underline dark:text-indigo-400">{copied === 'setup' ? 'Copied!' : 'Copy setup key'}</button>
+                        {copied === 'setup' && <p role="status" className="text-xs text-emerald-600">Setup key copied to clipboard.</p>}
+                        <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full" /></label>
+                        <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Verify and enable</button>
+                    </form>
+                }
+                
+                {enabled && 
+                    <form onSubmit={disable} className="mt-4 space-y-3">
+                        <label className="block text-sm font-medium">Current password
+                            <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full" required />
+                        </label>
+                        <label className="block text-sm font-medium">Authenticator or recovery code
+                            <input required value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-sm" />
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            <button className="rounded-md border px-4 py-2 text-sm font-semibold text-rose-600 dark:border-slate-700">Disable 2FA</button><button type="button" onClick={regenerate} disabled={!password || !/^\d{6}$/.test(code)} className="rounded-md border px-4 py-2 text-sm font-semibold dark:border-slate-700">Regenerate recovery codes</button>
+                        </div>
+                    </form>
+                }
+                
+                {recoveryCodes.length > 0 && 
+                    <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4">
+                        <p className="font-semibold">Save these recovery codes. They are shown only once.</p>
+                        <div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">
+                            {recoveryCodes.map(c => <code key={c}>{c}</code>)}
+                        </div>
+                        <button type="button" onClick={() => copyToClipboard(recoveryCodes.join('\n'), 'recovery')} className="text-sm underline">{copied === 'recovery' ? 'Copied!' : 'Copy recovery codes'}</button>
+                    </div>
+                }
+            </section>
+        </div>
+    );
 }

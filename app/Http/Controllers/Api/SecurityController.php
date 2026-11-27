@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class SecurityController extends Controller
 {
+    private const SETUP_TTL_MINUTES = 10;
+
     public function sessions(Request $request): JsonResponse
     {
         $this->ensureDatabaseSessions();
@@ -39,7 +41,7 @@ class SecurityController extends Controller
     public function revokeSession(Request $request, string $key): JsonResponse
     {
         $this->ensureDatabaseSessions();
-        $validated = $request->validate([
+        $request->validate([
             'current_password' => ['required', 'current_password:web'],
         ]);
         $userId = $request->user('web')->id;
@@ -90,33 +92,47 @@ class SecurityController extends Controller
         abort_if($user->two_factor_confirmed_at, 409, 'Two-factor authentication is already enabled.');
 
         $secret = $twoFactor->generateSecret();
-        $request->session()->put('two_factor_setup_secret', Crypt::encryptString($secret));
+        $request->session()->put([
+            'two_factor_setup_secret' => Crypt::encryptString($secret),
+            'two_factor_setup_expires_at' => now()->addMinutes(self::SETUP_TTL_MINUTES)->timestamp,
+        ]);
 
         return response()->json([
             'secret' => $secret,
             'otpauth_url' => $twoFactor->provisioningUri($user, $secret),
+            'expires_in_minutes' => self::SETUP_TTL_MINUTES,
         ]);
     }
 
     public function enableTwoFactor(Request $request, TwoFactorService $twoFactor): JsonResponse
     {
-        $validated = $request->validate(['code' => ['required', 'string', 'size:6']]);
-        $encryptedSecret = $request->session()->get('two_factor_setup_secret');
-        $secret = $encryptedSecret ? Crypt::decryptString($encryptedSecret) : null;
+        $validated = $request->validate(['code' => ['required', 'string', 'regex:/^\d{6}$/']]);
+        $user = $request->user('web');
 
-        abort_unless($secret, 422, 'Start two-factor setup before confirming it.');
+        abort_if($user->two_factor_confirmed_at, 409, 'Two-factor authentication is already enabled.');
+
+        $encryptedSecret = $request->session()->get('two_factor_setup_secret');
+        $expiresAt = $request->session()->get('two_factor_setup_expires_at');
+
+        if (! $encryptedSecret || ! $expiresAt || now()->timestamp > $expiresAt) {
+            $request->session()->forget(['two_factor_setup_secret', 'two_factor_setup_expires_at']);
+            abort(422, 'The two-factor setup has expired. Please start again.');
+        }
+
+        $secret = Crypt::decryptString($encryptedSecret);
 
         if (! $twoFactor->verifyCode($secret, $validated['code'])) {
             throw ValidationException::withMessages(['code' => ['The authenticator code is invalid.']]);
         }
 
         $codes = $twoFactor->generateRecoveryCodes();
-        $request->user('web')->forceFill([
+        $user->forceFill([
             'two_factor_secret' => $secret,
             'two_factor_recovery_codes' => $twoFactor->hashRecoveryCodes($codes),
             'two_factor_confirmed_at' => now(),
         ])->save();
-        $request->session()->forget('two_factor_setup_secret');
+
+        $request->session()->forget(['two_factor_setup_secret', 'two_factor_setup_expires_at']);
 
         return response()->json([
             'message' => 'Two-factor authentication enabled.',
@@ -155,7 +171,7 @@ class SecurityController extends Controller
     {
         $validated = $request->validate([
             'current_password' => ['required', 'current_password:web'],
-            'code' => ['required', 'string', 'max:32'],
+            'code' => ['required', 'string', 'regex:/^\d{6}$/'],
         ]);
         $user = $request->user('web');
 

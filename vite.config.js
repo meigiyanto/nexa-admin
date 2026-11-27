@@ -8,11 +8,23 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.jsx'],
             refresh: true,
         }),
-        react(),
+        react({
+            babel: {
+                plugins: ['babel-plugin-react-compiler'],
+            }
+        }),
     ],
+    build: {
+        cssMinify: false,
+        minify: true,
+        chunkSizeWarningLimit: 500000,
+    },
     server: {
         watch: {
+            usePolling: true,
             ignored: [
+                '**/storage/**',
+                '**/bootstrap/cache/**',
                 '**/.agents/**',
                 '**/.claude/**',
                 '**/.cursor/**',
@@ -20,11 +32,5 @@ export default defineConfig({
                 '**/vendor/**',
             ],
         },
-        usePolling: true,
     },
-    build: {
-        cssMinify: false,
-        minify: true,
-        chunkSizeWarningLimit: 500000,
-    }
 });

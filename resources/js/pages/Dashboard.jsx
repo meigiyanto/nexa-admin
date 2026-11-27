@@ -20,7 +20,7 @@ const translations = {
     'User status': 'Status pengguna', Appearance: 'Tampilan', 'Customize how the Nexa Admin dashboard looks on this device.': 'Sesuaikan tampilan dashboard Nexa Admin pada perangkat ini.',
     'Dark mode': 'Mode gelap', 'Use a darker color scheme across the dashboard.': 'Gunakan skema warna gelap di seluruh dashboard.',
     'Your preference is saved in this browser and will remain active when you return.': 'Preferensi disimpan di browser ini dan tetap aktif saat Anda kembali.',
-    User: 'Pengguna', Roles: 'Peran', Status: 'Status', Joined: 'Bergabung', Actions: 'Aksi', 'No users found.': 'Pengguna tidak ditemukan.',
+    User: 'Pengguna', Status: 'Status', Joined: 'Bergabung', Actions: 'Aksi', 'No users found.': 'Pengguna tidak ditemukan.',
     active: 'aktif', inactive: 'nonaktif', Search: 'Cari...', 'Manage access': 'Kelola akses', 'Edit user': 'Edit pengguna', 'Delete user': 'Hapus pengguna',
 };
 
@@ -50,66 +50,10 @@ function Avatar({ name, photoUrl }) {
     );
 }
 
-function Login({ onLogin }) {
-    const [form, setForm] = useState({ email: '', password: '' });
-    const [twoFactorRequired, setTwoFactorRequired] = useState(false);
-    const [code, setCode] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const submit = async event => {
-        event.preventDefault(); setLoading(true); setError('');
-        try {
-            await axios.get('/sanctum/csrf-cookie');
-            const { data } = await axios.post('/api/login', form);
-            if (data.requires_two_factor) { setTwoFactorRequired(true); return; }
-            onLogin({ ...data.user, roles: data.roles || [], permissions: data.permissions || [] });
-        } catch (requestError) {
-            setError(requestError.response?.data?.errors?.email?.[0] || requestError.response?.data?.message || 'Login failed.');
-        } finally { setLoading(false); }
-    };
-
-    const verify = async event => {
-        event.preventDefault(); setLoading(true); setError('');
-        try {
-            const { data } = await axios.post('/api/login/two-factor', { code });
-            onLogin({ ...data.user, roles: data.roles || [], permissions: data.permissions || [] });
-        } catch (requestError) {
-            setError(requestError.response?.data?.errors?.code?.[0] || requestError.response?.data?.message || 'Verification failed.');
-        } finally { setLoading(false); }
-    };
-
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-            <form onSubmit={twoFactorRequired ? verify : submit} className="w-full max-w-md rounded-md border bg-white p-8 shadow-xl">
-                <div className="mb-8 flex items-center gap-3">
-                    <div className="rounded-md bg-indigo-600 p-3 text-white"><LayoutDashboard size={24}/></div>
-                    <div><h1 className="text-xl font-bold">Nexa Admin</h1><p className="text-sm text-slate-500">{twoFactorRequired ? 'Verify your identity' : 'Sign in to your workspace'}</p></div>
-                </div>
-                {!twoFactorRequired ? (
-                    <>
-                        <label className="mb-2 block text-sm font-medium">Email address</label>
-                        <input type="email" required value={form.email} onChange={event => setForm({...form, email: event.target.value})} className="mb-5 w-full rounded-md form-input px-4 py-3"/>
-                        <label className="mb-2 block text-sm font-medium">Password</label>
-                        <input type="password" required value={form.password} onChange={event => setForm({...form, password: event.target.value})} className="mb-5 w-full rounded-md form-input px-4 py-3"/>
-                    </>
-                ) : (
-                    <>
-                        <p className="mb-5 text-sm text-slate-600">Enter the six-digit code from your authenticator app, or use one unused recovery code.</p>
-                        <label className="mb-2 block text-sm font-medium">Authentication code</label>
-                        <input autoFocus required value={code} onChange={event => setCode(event.target.value)} className="mb-5 w-full rounded-md form-input px-4 py-3" autoComplete="one-time-code"/>
-                    </>
-                )}
-                {error && <Alert type="error" onClose={() => setError('')} className="mb-4">{error}</Alert>}
-                <button disabled={loading} className="w-full rounded-md bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">{loading ? 'Please wait...' : twoFactorRequired ? 'Verify and sign in' : 'Sign in'}</button>
-                {twoFactorRequired && <button type="button" onClick={() => { setTwoFactorRequired(false); setCode(''); setError(''); }} className="mt-3 w-full rounded-md border py-3 text-sm font-semibold">Back to sign in</button>}
-            </form>
-        </div>
-    );
-}
-
 function Dashboard() {
     const [user, setUser] = useState(null);
+    const [authStatus, setAuthStatus] = useState('checking');
+    const [authError, setAuthError] = useState('');
     const [page, setPage] = useState('Overview');
     const [mobileOpen, setMobileOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -169,9 +113,15 @@ function Dashboard() {
     };
 
     useEffect(() => {
+        let active = true;
+
         axios.get('/api/user')
             .then(({ data }) => {
+                if (!active) return;
+
                 setUser({ ...data.user, roles: data.roles || [], permissions: data.permissions || [] });
+                setAuthStatus('authenticated');
+
                 if ((data.permissions || []).includes('dashboard.view')) {
                     loadDashboard();
                 } else {
@@ -183,8 +133,26 @@ function Dashboard() {
                     setLoading(false);
                 }
             })
-            .catch(() => setLoading(false));
+            .catch(error => {
+                if (!active) return;
+
+                if (error.response?.status === 401) {
+                    setAuthStatus('unauthenticated');
+                    return;
+                }
+
+                setAuthError(error.response?.data?.message || 'Unable to verify your session. Please try again.');
+                setAuthStatus('error');
+            });
+
+        return () => {
+            active = false;
+        };
     }, []);
+
+    useEffect(() => {
+        if (authStatus === 'unauthenticated') window.location.replace('/login');
+    }, [authStatus]);
 
     useEffect(() => {
         if (user && page === 'Users') {
@@ -200,6 +168,7 @@ function Dashboard() {
         try {
             await axios.post('/api/logout');
             setUser(null);
+            setAuthStatus('unauthenticated');
             setPage('Overview');
             setStats({});
             setChart([]);
@@ -211,6 +180,7 @@ function Dashboard() {
             if (error.response?.status === 401) {
                 // The server already considers this browser unauthenticated.
                 setUser(null);
+                setAuthStatus('unauthenticated');
                 setPage('Overview');
                 setStats({});
                 setChart([]);
@@ -286,21 +256,32 @@ function Dashboard() {
         }
     };
 
-    if (!user) {
-        return <Login onLogin={user => {
-            setUser(user);
-            if (user.permissions?.includes('dashboard.view')) {
-                loadDashboard();
-            } else {
-                const availablePage = ['Users', 'Roles', 'Analytics'].find((page, index) => {
-                    const permission = ['users.view', 'roles.view', 'analytics.view'][index];
-                    return user.permissions?.includes(permission);
-                });
-                setPage(availablePage || 'No Access');
-                setLoading(false);
-            }
-        }}/>;
+    if (authStatus === 'checking') {
+        return (
+            <div role="status" aria-live="polite" className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                <div className="flex items-center gap-3 text-sm">
+                    <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"/>
+                    Restoring your session...
+                </div>
+            </div>
+        );
     }
+
+    if (authStatus === 'error') {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
+                <div className="w-full max-w-md rounded-md border bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <h1 className="text-lg font-bold text-slate-900 dark:text-white">Unable to verify your session</h1>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{authError}</p>
+                    <button onClick={() => window.location.reload()} className="mt-6 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+                        Try again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (authStatus === 'unauthenticated') return null;
 
     const can = permission => user.permissions?.includes(permission) || false;
     const navigation = [
@@ -412,7 +393,7 @@ function Dashboard() {
                         <>
                             <div className="mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                                 <div>
-                                    <h2 className="text-2xl font-bold tracking-tight">{tr((() => { const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hourCycle: 'h23', timeZone: localization.timezone }).format(new Date())); return hour < 11 ? 'Good morning' : hour < 15 ? 'Good afternoon' : 'Good evening'; })())}, {user.name.split(' ')[0]} 👋</h2>
+                                    <h2 className="text-2xl font-bold tracking-tight">{tr((() => { const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hourCycle: 'h23', timeZone: localization.timezone }).format(new Date())); return hour < 5 ? 'Good night' : hour < 11 ? 'Good morning' : hour < 15 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night'; })())}, {user.name.split(' ')[0]} 👋</h2>
                                     <p className="mt-1 text-sm text-slate-500">{tr("Here's what's happening with your workspace today.")}</p>
                                 </div>
                                 {can('users.create') && <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"><Plus size={17}/> {tr('Add new user')}</button>}

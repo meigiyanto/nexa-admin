@@ -17,24 +17,21 @@ button, input, select, textarea {
     font: inherit;
 }
 
-
 @layer base {
     input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
     select,
     textarea {
-        @apply rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400;
+        @apply rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400;
         @apply outline-none transition-colors;
     }
 
     input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
     select:focus,
     textarea:focus {
-        border-color: transparent;
+        @apply border-indigo-500 ring-2 ring-indigo-100;
         outline: none;
-        box-shadow: none;
     }
 }
-
 
 /* Dashboard dark theme overrides */
 .dark body {
@@ -67,8 +64,13 @@ button, input, select, textarea {
     .dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
     .dark select, .dark textarea {
         background-color: #1e293b;
-        border-color: #475569;
+        border-color: #64748b;
         color: #f1f5f9;
+    }
+    .dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+    .dark select:focus, .dark textarea:focus {
+        border-color: #818cf8;
+        box-shadow: 0 0 0 2px rgb(129 140 248 / 0.2);
     }
     .dark input::placeholder, .dark textarea::placeholder { color: #94a3b8; }
     .dark thead, .dark .bg-slate-50 { color-scheme: dark; }
