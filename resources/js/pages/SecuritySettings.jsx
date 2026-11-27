@@ -43,7 +43,7 @@ export default function SecuritySettings({ user }) {
 
     const load = async () => {
         try { setSessions((await axios.get('/api/security/sessions')).data.sessions || []); }
-        catch (e) { setError(e.response?.data?.message || 'Unable to load sessions.'); }
+        catch (e) { setSessionError(e.response?.data?.message || 'Unable to load sessions.'); }
     };
     useEffect(() => { load(); }, []);
 
@@ -74,19 +74,21 @@ export default function SecuritySettings({ user }) {
         } catch (e) { setError(e.response?.data?.errors?.code?.[0] || e.response?.data?.message || 'Unable to disable 2FA.'); }
     };
     const revoke = async (key, isCurrent) => {
-        if (!password) { setError('Enter your current password first.'); return; }
+        setSessionError(''); setSessionMessage('');
+        if (!password) { setSessionError('Enter your current password first.'); return; }
         try {
             await axios.delete('/api/security/sessions/'+key, { data: { current_password: password } });
             if (isCurrent) { window.location.reload(); return; }
-            setPassword(''); await load(); setMessage('Session revoked.');
-        } catch (e) { setError(e.response?.data?.message || 'Unable to revoke session.'); }
+            setPassword(''); await load(); setSessionMessage('Session revoked.');
+        } catch (e) { setSessionError(e.response?.data?.message || 'Unable to revoke session.'); }
     };
     const revokeOthers = async () => {
-        if (!password) { setError('Enter your current password first.'); return; }
+        setSessionError(''); setSessionMessage('');
+        if (!password) { setSessionError('Enter your current password first.'); return; }
         try {
             const data = (await axios.post('/api/security/sessions/revoke-others', { current_password: password })).data;
-            setPassword(''); await load(); setMessage(data.revoked+' other session(s) revoked.');
-        } catch (e) { setError(e.response?.data?.message || 'Unable to revoke sessions.'); }
+            setPassword(''); await load(); setSessionMessage(data.revoked+' other session(s) revoked.');
+        } catch (e) { setSessionError(e.response?.data?.message || 'Unable to revoke sessions.'); }
     };
 
     return (
