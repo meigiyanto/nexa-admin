@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -146,5 +147,15 @@ class NotificationCenterTest extends TestCase
             'notifiable_id' => $recipient->id,
             'type' => \App\Notifications\SystemActivityNotification::class,
         ]);
+    }
+    public function test_system_activity_notifications_are_persisted_and_broadcast(): void
+    {
+        $user = User::factory()->make();
+        $notification = new \\App\\Notifications\\SystemActivityNotification(
+            'Realtime update', 'A new activity occurred.', 'test.realtime', 'System',
+        );
+
+        $this->assertSame(['database', 'broadcast'], $notification->via($user));
+        $this->assertInstanceOf(BroadcastMessage::class, $notification->toBroadcast($user));
     }
 }
