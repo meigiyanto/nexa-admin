@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Bell, CheckCheck, Trash2, X } from 'lucide-react';
 import axios from 'axios';
+import Alert from './Alert';
 
 function timeAgo(value) {
     const date = new Date(value);
@@ -143,7 +144,7 @@ export default function NotificationBell({ userId, canManage = false }) {
                             <button type="button" onClick={() => setOpen(false)} title="Close" className="rounded-md p-2 text-slate-500 hover:bg-slate-100"><X size={16}/></button>
                         </div>
                     </div>
-                    {error && <p className="border-b bg-rose-50 px-4 py-2 text-xs text-rose-600">{error}</p>}
+                    {error && <Alert type="error" onClose={() => setError('')} className="rounded-none border-x-0 border-t-0 px-4 py-2 text-xs">{error}</Alert>}
                     <div className="max-h-[420px] overflow-y-auto">
                         {loading ? <p className="p-8 text-center text-sm text-slate-400">Loading notifications...</p> : items.length === 0 ? (
                             <div className="p-8 text-center">
