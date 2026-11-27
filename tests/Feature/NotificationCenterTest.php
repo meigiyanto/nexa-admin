@@ -84,6 +84,31 @@ class NotificationCenterTest extends TestCase
         $this->assertSame(0, $admin->notifications()->count());
     }
 
+    public function test_viewer_cannot_clear_all_notifications(): void
+    {
+        $viewer = User::factory()->create();
+        $viewer->assignRole('viewer');
+        $viewer->notify(new \\App\\Notifications\\SystemActivityNotification(
+            'First', 'First notification.', 'test', 'System',
+        ));
+
+        $this->actingAs($viewer)->deleteJson('/api/notifications')->assertForbidden();
+        $this->assertSame(1, $viewer->notifications()->count());
+    }
+
+    public function test_user_can_delete_their_own_notification(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('viewer');
+        $user->notify(new \\App\\Notifications\\SystemActivityNotification(
+            'First', 'First notification.', 'test', 'System',
+        ));
+        $id = $user->notifications()->value('id');
+
+        $this->actingAs($user)->deleteJson("/api/notifications/{$id}")->assertOk();
+        $this->assertDatabaseMissing('notifications', ['id' => $id]);
+    }
+
     public function test_creating_a_user_notifies_other_active_notification_recipients(): void
     {
         $admin = User::factory()->create();
