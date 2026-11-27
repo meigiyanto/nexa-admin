@@ -153,7 +153,7 @@ export default function SecuritySettings({ user }) {
                         <code className="block break-all rounded bg-slate-100 p-3 dark:bg-slate-800">{secret}</code>
                         <button type="button" onClick={() => copyToClipboard(secret, 'setup')} className="text-sm font-semibold text-indigo-600 underline dark:text-indigo-400">{copied === 'setup' ? 'Copied!' : 'Copy setup key'}</button>
                         {copied === 'setup' && <p role="status" className="text-xs text-emerald-600">Setup key copied to clipboard.</p>}
-                        <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-xs" /></label>
+                        <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full" /></label>
                         <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Verify and enable</button>
                     </form>
                 }
