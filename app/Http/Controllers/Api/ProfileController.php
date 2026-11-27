@@ -21,6 +21,11 @@ class ProfileController extends Controller
             'password' => $validated['password'],
         ])->save();
 
+        if (config('session.driver') === 'database') {
+            DB::table('sessions')->where('user_id', $request->user('web')->id)
+                ->where('id', '!=', $request->session()->getId())->delete();
+        }
+
         return response()->json([
             'message' => 'Password changed successfully.',
         ]);
