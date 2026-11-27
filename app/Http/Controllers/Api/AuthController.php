@@ -88,8 +88,15 @@ class AuthController extends Controller
 
         $user = User::find($userId);
 
-        abort_unless($user && $user->status === 'active' && $user->two_factor_confirmed_at && $user->two_factor_secret, 422,
-            'The two-factor login challenge is no longer valid.');
+        if (! $user || $user->status !== 'active' || ! $user->two_factor_confirmed_at || ! $user->two_factor_secret) {
+            $request->session()->forget([
+                'two_factor_login_user_id',
+                'two_factor_login_remember',
+                'two_factor_login_expires_at',
+            ]);
+
+            abort(422, 'The two-factor login challenge is no longer valid.');
+        }
 
         $code = trim($validated['code']);
         $valid = preg_match('/^\d{6}$/', $code)
