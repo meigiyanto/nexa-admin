@@ -11,7 +11,7 @@ function timeAgo(value) {
     return date.toLocaleDateString();
 }
 
-export default function NotificationBell({ canManage = false }) {
+export default function NotificationBell({ userId, canManage = false }) {
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([]);
     const [unread, setUnread] = useState(0);
@@ -43,9 +43,33 @@ export default function NotificationBell({ canManage = false }) {
     };
 
     useEffect(() => {
+        if (!userId || !window.Echo) return undefined;
+
+        const channel = window.Echo.private(`App.Models.User.${userId}`);
+        const connection = window.Echo.connector.pusher.connection;
+        const refreshAfterReconnect = () => loadCount();
+        connection.bind('connected', refreshAfterReconnect);
+
+        channel.notification(notification => {
+            const item = {
+                id: notification.id,
+                data: notification.data || {},
+                read_at: null,
+                created_at: new Date().toISOString(),
+            };
+
+            setItems(current => [item, ...current.filter(existing => existing.id !== item.id)].slice(0, 10));
+            setUnread(current => current + 1);
+        });
+
+        return () => {
+            connection.unbind('connected', refreshAfterReconnect);
+            window.Echo.leave(`App.Models.User.${userId}`);
+        };
+    }, [userId]);
+
+    useEffect(() => {
         loadCount();
-        const interval = window.setInterval(loadCount, 60000);
-        return () => window.clearInterval(interval);
     }, []);
 
     useEffect(() => {
