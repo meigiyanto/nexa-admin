@@ -17,7 +17,7 @@ class SystemActivityNotifier
     ): void {
         $recipients = User::permission('notifications.view')
             ->where('status', 'active')
-            ->whereKeyNot($actor->getKey())
+            ->where('id', '!=', $actor->getKey())
             ->get();
 
         if ($recipients->isEmpty()) {
