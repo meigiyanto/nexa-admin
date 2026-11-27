@@ -8,8 +8,17 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.jsx'],
             refresh: true,
         }),
-        react(),
+        react({
+            babel: {
+                plugins: ['babel-plugin-react-compiler'],
+            }
+        }),
     ],
+    build: {
+        cssMinify: false,
+        minify: true,
+        chunkSizeWarningLimit: 500000,
+    },
     server: {
         watch: {
             usePolling: true,
@@ -24,9 +33,4 @@ export default defineConfig({
             ],
         },
     },
-    build: {
-        cssMinify: false,
-        minify: true,
-        chunkSizeWarningLimit: 500000,
-    }
 });
