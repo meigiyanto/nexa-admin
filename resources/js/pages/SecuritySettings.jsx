@@ -103,17 +103,9 @@ export default function SecuritySettings({ user }) {
                     {enabled ? 'Two-factor authentication is enabled.': 'Two-factor authentication is disabled.'}
                 </p>
             
-                {message && 
-                    <p role="status" className="text-sm text-emerald-600">
-                        {message}
-                    </p>
-                }
+                {message && <Alert type="success" onClose={() => setMessage('')}>{message}</Alert>}
                 
-                {error && 
-                    <p role="alert" className="text-sm text-rose-600">
-                        {error}
-                    </p>
-                }
+                {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
             
                 {!enabled && !secret && 
                     <form onSubmit={start} className="mt-4 space-y-3">
