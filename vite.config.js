@@ -12,6 +12,7 @@ export default defineConfig({
     ],
     server: {
         watch: {
+            usePolling: true,
             ignored: [
                 '**/storage/**',
                 '**/bootstrap/cache/**',
@@ -22,7 +23,6 @@ export default defineConfig({
                 '**/vendor/**',
             ],
         },
-        usePolling: true,
     },
     build: {
         cssMinify: false,

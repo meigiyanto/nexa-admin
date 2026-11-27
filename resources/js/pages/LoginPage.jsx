@@ -114,7 +114,7 @@ export default function LoginPage() {
                 </button>
                 {twoFactorRequired && <button type="button" onClick={() => { setTwoFactorRequired(false); setCode(''); setError(''); }} className="w-full rounded-md border border-slate-200 py-3 text-sm font-semibold text-slate-600 dark:border-slate-700 dark:text-slate-300">Back to sign in</button>}
             </form>
-            {!twoFactorRequired && <div className="mt-5 text-right"><a href="/forgot-password" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">Forgot password?</a></div>}
+            {!twoFactorRequired && <div className="mt-5 text-center"><a href="/forgot-password" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">Forgot password?</a></div>}
         </AuthLayout>
     );
 }
