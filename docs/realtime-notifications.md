@@ -7,8 +7,9 @@ Nexa Admin stores each system notification in the database and broadcasts it to 
 After checking out this branch, install the Laravel broadcasting stack:
 
 ```bash
-php artisan install:broadcasting --reverb
-npm install
+composer require laravel/reverb
+php artisan reverb:install
+npm install --save-dev laravel-echo pusher-js
 ```
 
 The Laravel installer adds the Reverb server package, Laravel Echo, Pusher JS, broadcasting configuration, and Reverb environment variables. Keep the generated `REVERB_APP_ID`, `REVERB_APP_KEY`, and `REVERB_APP_SECRET` values private. The corresponding `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT`, and `VITE_REVERB_SCHEME` values must match the Reverb application configuration.
