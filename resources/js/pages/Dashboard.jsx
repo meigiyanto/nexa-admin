@@ -339,7 +339,7 @@ function Dashboard() {
                             {/* <input className="w-36 border-0 bg-transparent p-0 text-xs focus:ring-0" placeholder="Search..."/> */}
                             <input className="form-in" placeholder="Search..."/>
                         </div>
-                        {can('notifications.view') && <NotificationBell canManage={can('notifications.manage')}/ >}
+                        {can('notifications.view') && <NotificationBell canManage={can('notifications.manage')}/>}
                         <div className="flex items-center gap-2">
                             <Avatar name={user.name}/>
                             <div className="hidden sm:block">
