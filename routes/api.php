@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login'])
     ->middleware(['web', 'throttle:login']);
 Route::post('/login/two-factor', [AuthController::class, 'verifyTwoFactor'])
-    ->middleware(['web', 'throttle:5,1']);
+    ->middleware(['web', 'throttle:two-factor']);
 Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink'])
     ->middleware(['web', 'throttle:5,1']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])
