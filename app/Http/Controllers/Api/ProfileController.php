@@ -10,6 +10,22 @@ use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password:web'],
+            'password' => ['required', 'string', 'min:8', 'confirmed', 'different:current_password'],
+        ]);
+
+        $request->user('web')->forceFill([
+            'password' => $validated['password'],
+        ])->save();
+
+        return response()->json([
+            'message' => 'Password changed successfully.',
+        ]);
+    }
+
     public function update(Request $request): JsonResponse
     {
         $user = $request->user('web');
