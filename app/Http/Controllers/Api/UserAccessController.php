@@ -125,7 +125,7 @@ class UserAccessController extends Controller
 
         $user->syncPermissions($permissions);
 
-        app(SystemActivityNotifier::class)->notifyAdmins(
+        app(SystemActivityNotifier::class)->notifyRecipients(
             $request->user(),
             'User permissions updated',
             "Direct permissions for {$user->name} were changed.",
