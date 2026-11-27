@@ -5,14 +5,17 @@ import axios from 'axios';
 import RolesPage from './RolesPage';
 import UserAccessModal from './UserAccessModal';
 import AnalyticsPage from './AnalyticsPage';
+import ProfileSettings from './ProfileSettings';
 import NotificationBell from '../components/NotificationBell';
 
 const initialForm = {
     name: '', email: '', password: '', status: 'active'
 };
 
-function Avatar({ name }) {
+function Avatar({ name, photoUrl }) {
     const initials = name?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+
+    if (photoUrl) return <img src={photoUrl} alt={name || 'Profile'} className="h-9 w-9 rounded-full border border-slate-200 object-cover"/>;
 
     return (
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
@@ -350,7 +353,7 @@ function Dashboard() {
                         </button>
                         {can('notifications.view') && <NotificationBell userId={user.id} canManage={can('notifications.manage')}/>}
                         <div className="flex items-center gap-2">
-                            <Avatar name={user.name}/>
+                            <Avatar name={user.name} photoUrl={user.profile_photo_url}/>
                             <div className="hidden sm:block">
                                 <p className="text-xs font-semibold">{user.name}</p>
                                 <p className="text-xs capitalize text-slate-400">{user.roles?.join(', ') || 'No role'}</p>
@@ -477,27 +480,28 @@ function Dashboard() {
                     ) : page === 'Analytics' ? (
                         <AnalyticsPage canExport={can('analytics.export')}/>
                     ) : page === 'Settings' ? (
-                        <section className="max-w-3xl rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                            <div className="mb-6">
-                                <h2 className="text-xl font-bold">Appearance</h2>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Customize how the Nexa Admin dashboard looks on this device.</p>
-                            </div>
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <span className="rounded-md bg-slate-100 p-3 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                        {darkMode ? <Moon size={20}/> : <Sun size={20}/>}
-                                    </span>
-                                    <div>
-                                        <p className="text-sm font-semibold">Dark mode</p>
-                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Use a darker color scheme across the dashboard.</p>
-                                    </div>
+                        <div className="max-w-3xl space-y-6">
+                            <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                                <div className="mb-6">
+                                    <h2 className="text-xl font-bold">Appearance</h2>
+                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Customize how the Nexa Admin dashboard looks on this device.</p>
                                 </div>
-                                <button type="button" role="switch" aria-checked={darkMode} onClick={() => setDarkMode(value => !value)} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${darkMode ? 'bg-indigo-600' : 'bg-slate-300'}`}>
-                                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`}/>
-                                </button>
-                            </div>
-                            <p className="mt-5 text-xs text-slate-400 dark:text-slate-500">Your preference is saved in this browser and will remain active when you return.</p>
-                        </section>
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <span className="rounded-md bg-slate-100 p-3 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{darkMode ? <Moon size={20}/> : <Sun size={20}/>}</span>
+                                        <div>
+                                            <p className="text-sm font-semibold">Dark mode</p>
+                                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Use a darker color scheme across the dashboard.</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" role="switch" aria-checked={darkMode} onClick={() => setDarkMode(value => !value)} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${darkMode ? 'bg-indigo-600' : 'bg-slate-300'}`}>
+                                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`}/>
+                                    </button>
+                                </div>
+                                <p className="mt-5 text-xs text-slate-400 dark:text-slate-500">Your preference is saved in this browser and will remain active when you return.</p>
+                            </section>
+                            <ProfileSettings user={user} onUpdated={updatedUser => setUser(current => ({...current, ...updatedUser}))}/>
+                        </div>
                     ) : (
                         <div className="rounded-md border bg-white p-10 text-center">
                             <Settings className="mx-auto mb-3 text-slate-400"/>
