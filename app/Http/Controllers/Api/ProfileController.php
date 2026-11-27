@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use IlluminateHttpJsonResponse;
-use IlluminateHttpRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use IlluminateSupportFacades\Storage;
 use IlluminateValidation\Rule;
 
