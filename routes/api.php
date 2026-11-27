@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\UserAccessController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,10 @@ Route::middleware(['web', 'auth:web'])->group(function () {
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->middleware('throttle:5,1');
+
+    // Personal dashboard settings
+    Route::get('/settings', [SettingsController::class, 'show'])->middleware('can:settings.view');
+    Route::put('/settings', [SettingsController::class, 'update'])->middleware('can:settings.update');
 
     // Notification center
     Route::get('/notifications', [NotificationController::class, 'index'])
