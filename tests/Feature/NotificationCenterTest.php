@@ -88,7 +88,7 @@ class NotificationCenterTest extends TestCase
     {
         $viewer = User::factory()->create();
         $viewer->assignRole('viewer');
-        $viewer->notify(new \\App\\Notifications\\SystemActivityNotification(
+        $viewer->notify(new \App\Notifications\SystemActivityNotification(
             'First', 'First notification.', 'test', 'System',
         ));
 
@@ -100,7 +100,7 @@ class NotificationCenterTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('viewer');
-        $user->notify(new \\App\\Notifications\\SystemActivityNotification(
+        $user->notify(new \App\Notifications\SystemActivityNotification(
             'First', 'First notification.', 'test', 'System',
         ));
         $id = $user->notifications()->value('id');
