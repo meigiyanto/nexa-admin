@@ -412,7 +412,7 @@ function Dashboard() {
                         <>
                             <div className="mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                                 <div>
-                                    <h2 className="text-2xl font-bold tracking-tight">{tr((() => { const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hourCycle: 'h23', timeZone: localization.timezone }).format(new Date())); return hour < 11 ? 'Good morning' : hour < 15 ? 'Good afternoon' : 'Good evening'; })())}, {user.name.split(' ')[0]} 👋</h2>
+                                    <h2 className="text-2xl font-bold tracking-tight">{tr((() => { const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hourCycle: 'h23', timeZone: localization.timezone }).format(new Date())); return hour < 5 ? 'Good night' : hour < 11 ? 'Good morning' : hour < 15 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night'; })())}, {user.name.split(' ')[0]} 👋</h2>
                                     <p className="mt-1 text-sm text-slate-500">{tr("Here's what's happening with your workspace today.")}</p>
                                 </div>
                                 {can('users.create') && <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"><Plus size={17}/> {tr('Add new user')}</button>}
