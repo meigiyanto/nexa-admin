@@ -111,7 +111,7 @@ class UserController extends Controller
         $user->update($validated);
 
         if ($originalStatus !== $user->status) {
-            app(SystemActivityNotifier::class)->notifyAdmins(
+            app(SystemActivityNotifier::class)->notifyRecipients(
                 $request->user(),
                 'User status changed',
                 "{$user->name} was {$user->status}.",
@@ -140,7 +140,7 @@ class UserController extends Controller
         $deletedName = $user->name;
         $user->delete();
 
-        app(SystemActivityNotifier::class)->notifyAdmins(
+        app(SystemActivityNotifier::class)->notifyRecipients(
             $request->user(),
             'User deleted',
             "{$deletedName} was removed from the workspace.",
