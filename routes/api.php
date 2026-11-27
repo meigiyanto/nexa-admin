@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\PermissionController;
@@ -17,6 +18,12 @@ Route::middleware(['web', 'auth:web'])->group(function () {
 
     Route::get('/dashboard', DashboardController::class)
         ->middleware('can:dashboard.view');
+
+    Route::get('/analytics', [AnalyticsController::class, 'index'])
+        ->middleware('can:analytics.view');
+
+    Route::get('/analytics/export', [AnalyticsController::class, 'export'])
+        ->middleware('can:analytics.export');
 
     // User management
     Route::get('/users', [UserController::class, 'index'])
