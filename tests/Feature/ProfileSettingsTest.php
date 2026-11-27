@@ -64,7 +64,7 @@ class ProfileSettingsTest extends TestCase
         Storage::fake('public');
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->put('/api/profile', [
+        $response = $this->actingAs($user)->post('/api/profile', [
             'name' => $user->name,
             'email' => $user->email,
             'photo' => UploadedFile::fake()->image('avatar.jpg'),
