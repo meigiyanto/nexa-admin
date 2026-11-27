@@ -29,9 +29,9 @@ class TwoFactorService
 
     public function verifyCode(string $secret, string $code): bool
     {
-        $code = preg_replace('/\s+/', '', $code);
+        $code = preg_replace('/\\s+/', '', $code);
 
-        if (! preg_match('/^\d{6}$/', $code)) {
+        if (! preg_match('/^\\d{6}$/', $code)) {
             return false;
         }
 
@@ -40,7 +40,7 @@ class TwoFactorService
 
         for ($offset = -1; $offset <= 1; $offset++) {
             $value = $counter + $offset;
-            $message = pack('N2', intdiv($value, 4294967296), $value % 4294967296);
+            $message = pack('N2', 0, $value);
             $hash = hash_hmac('sha1', $message, $key, true);
             $position = ord($hash[19]) & 0x0f;
             $binary = ((ord($hash[$position]) & 0x7f) << 24)
@@ -112,7 +112,7 @@ class TwoFactorService
         foreach (str_split($value) as $character) {
             $position = strpos(self::BASE32, $character);
             if ($position === false) {
-                throw new \InvalidArgumentException('Invalid TOTP secret.');
+                throw new \\InvalidArgumentException('Invalid TOTP secret.');
             }
             $binary .= str_pad(decbin($position), 5, '0', STR_PAD_LEFT);
         }
