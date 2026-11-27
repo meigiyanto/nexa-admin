@@ -12,6 +12,34 @@ export default function SecuritySettings({ user }) {
     const [recoveryCodes, setRecoveryCodes] = useState([]);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
+    const [copied, setCopied] = useState('');
+
+    const copyToClipboard = async (value, target) => {
+        setError(''); setCopied('');
+        try {
+            if (navigator.clipboard?.writeText) {
+                try { await navigator.clipboard.writeText(value); }
+                catch {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = value; textarea.setAttribute('readonly', '');
+                    textarea.style.position = 'fixed'; textarea.style.opacity = '0';
+                    document.body.appendChild(textarea); textarea.select();
+                    const copied = document.execCommand('copy'); textarea.remove();
+                    if (!copied) throw new Error('Clipboard access denied.');
+                }
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = value; textarea.setAttribute('readonly', '');
+                textarea.style.position = 'fixed'; textarea.style.opacity = '0';
+                document.body.appendChild(textarea); textarea.select();
+                const copied = document.execCommand('copy'); textarea.remove();
+                if (!copied) throw new Error('Clipboard access unavailable.');
+            }
+            setCopied(target);
+        } catch {
+            setError('Unable to copy. Please select and copy the text manually.');
+        }
+    };
 
     const load = async () => {
         try { setSessions((await axios.get('/api/security/sessions')).data.sessions || []); }
@@ -123,7 +151,8 @@ export default function SecuritySettings({ user }) {
                             Add this key manually in your authenticator app for {user.email}. This setup expires in {setupExpiresIn} minutes.
                         </p>
                         <code className="block break-all rounded bg-slate-100 p-3 dark:bg-slate-800">{secret}</code>
-                        <button type="button" onClick={() => navigator.clipboard?.writeText(secret)} className="text-sm font-semibold text-indigo-600 underline dark:text-indigo-400">Copy setup key</button>
+                        <button type="button" onClick={() => copyToClipboard(secret, 'setup')} className="text-sm font-semibold text-indigo-600 underline dark:text-indigo-400">{copied === 'setup' ? 'Copied!' : 'Copy setup key'}</button>
+                        {copied === 'setup' && <p role="status" className="text-xs text-emerald-600">Setup key copied to clipboard.</p>}
                         <label className="block text-sm font-medium">Six-digit authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="mt-1.5 w-full sm:max-w-xs" /></label>
                         <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Verify and enable</button>
                     </form>
@@ -149,7 +178,7 @@ export default function SecuritySettings({ user }) {
                         <div className="my-3 grid grid-cols-2 gap-2 font-mono text-sm">
                             {recoveryCodes.map(c => <code key={c}>{c}</code>)}
                         </div>
-                        <button type="button" onClick={() => navigator.clipboard?.writeText(recoveryCodes.join('\n'))} className="text-sm underline">Copy recovery codes</button>
+                        <button type="button" onClick={() => copyToClipboard(recoveryCodes.join('\n'), 'recovery')} className="text-sm underline">{copied === 'recovery' ? 'Copied!' : 'Copy recovery codes'}</button>
                     </div>
                 }
             </section>
