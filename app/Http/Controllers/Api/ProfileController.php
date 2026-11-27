@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
@@ -17,9 +19,16 @@ class ProfileController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed', 'different:current_password'],
         ]);
 
-        $request->user('web')->forceFill([
+        $user = $request->user('web');
+        $user->forceFill([
             'password' => $validated['password'],
+            'remember_token' => Str::random(60),
         ])->save();
+
+        if (config('session.driver') === 'database') {
+            DB::table('sessions')->where('user_id', $user->id)
+                ->where('id', '!=', $request->session()->getId())->delete();
+        }
 
         return response()->json([
             'message' => 'Password changed successfully.',
