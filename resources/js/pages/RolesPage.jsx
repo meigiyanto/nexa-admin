@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Plus, Pencil, Trash2, ShieldCheck, Save, X } from 'lucide-react';
+import Alert from '../components/Alert';
 
 export default function RolesPage({ permissions: currentPermissions = [] }) {
     const [roles, setRoles] = useState([]);
@@ -116,7 +117,7 @@ export default function RolesPage({ permissions: currentPermissions = [] }) {
                 )}
             </div>
 
-            {error && <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+            {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
 
             {canManagePermissions && (canCreate || canUpdate) && (
                 <form onSubmit={saveRole} className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
