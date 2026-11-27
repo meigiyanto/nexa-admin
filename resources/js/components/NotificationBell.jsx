@@ -81,11 +81,9 @@ export default function NotificationBell({ canManage = false }) {
     const remove = async id => {
         try {
             await axios.delete(`/api/notifications/${id}`);
-            setItems(current => {
-                const removed = current.find(item => item.id === id);
-                if (removed && !removed.read_at) setUnread(count => Math.max(0, count - 1));
-                return current.filter(item => item.id !== id);
-            });
+            const removed = items.find(item => item.id === id);
+            setItems(current => current.filter(item => item.id !== id));
+            if (removed && !removed.read_at) setUnread(count => Math.max(0, count - 1));
         } catch (requestError) {
             setError(requestError.response?.data?.message || 'Unable to delete notification.');
         }
