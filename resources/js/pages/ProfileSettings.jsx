@@ -43,9 +43,7 @@ export default function ProfileSettings({ user, onUpdated }) {
         if (removePhoto) payload.append('remove_photo', '1');
 
         try {
-            const { data } = await axios.post('/api/profile', payload, {
-                headers: { 'Content-Type': 'multipart/form-data', 'X-HTTP-Method-Override': 'PUT' }
-            });
+            const { data } = await axios.post('/api/profile', payload);
             onUpdated?.(data.user);
             setPhoto(null);
             setRemovePhoto(false);
