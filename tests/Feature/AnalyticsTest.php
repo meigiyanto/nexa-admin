@@ -17,6 +17,25 @@ class AnalyticsTest extends TestCase
         $this->seed(PermissionSeeder::class);
     }
 
+    public function test_login_session_cookie_authenticates_analytics_requests(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'analytics-session@example.com',
+            'password' => bcrypt('secret-password'),
+        ]);
+        $user->givePermissionTo('analytics.view');
+
+        $this->postJson('/api/login', [
+            'email' => 'analytics-session@example.com',
+            'password' => 'secret-password',
+        ])->assertOk()
+            ->assertCookie(config('session.cookie'));
+
+        $this->getJson('/api/analytics?start_date=2026-11-01&end_date=2026-11-02')
+            ->assertOk()
+            ->assertJsonStructure(['filters', 'summary', 'registrations']);
+    }
+
     public function test_user_with_analytics_view_permission_can_view_date_filtered_report(): void
     {
         $viewer = User::factory()->create();
