@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "tailwindcss";
-@plugin "@tailwindcss/forms";
-
 :root {
     font-family: Inter, sans-serif;
     font-synthesis: none;
