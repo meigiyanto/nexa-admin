@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\SystemActivityNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -87,6 +88,14 @@ class UserAccessController extends Controller
 
         $user->syncRoles($roles);
 
+        app(SystemActivityNotifier::class)->notifyAdmins(
+            $request->user(),
+            'User roles updated',
+            "Roles for {$user->name} are now: ".$roles->pluck('name')->join(', ').'.',
+            'user.roles.updated',
+            '/users',
+        );
+
         return $this->show($request, $user);
     }
 
@@ -115,6 +124,14 @@ class UserAccessController extends Controller
             ->get();
 
         $user->syncPermissions($permissions);
+
+        app(SystemActivityNotifier::class)->notifyAdmins(
+            $request->user(),
+            'User permissions updated',
+            "Direct permissions for {$user->name} were changed.",
+            'user.permissions.updated',
+            '/users',
+        );
 
         return $this->show($request, $user);
     }
