@@ -337,9 +337,6 @@ function Dashboard() {
                         </div>
                         <p className="text-xs leading-5 text-slate-500">{localization.locale === 'id' ? 'Kelola ruang kerja dan tim Anda dari satu tempat.' : 'Manage your workspace and team from one place.'}</p>
                     </div>}
-                    <button onClick={logout} disabled={logoutLoading} title={sidebarCollapsed ? 'Sign out' : undefined} className={`mt-4 flex w-full items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} rounded-md py-2.5 text-sm text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-wait disabled:opacity-50`}>
-                        <LogOut size={18}/>{!sidebarCollapsed && (logoutLoading ? 'Signing out...' : 'Sign out')}
-                    </button>
                 </div>
             </aside>
 
@@ -357,7 +354,6 @@ function Dashboard() {
                     <div className="flex items-center gap-4">
                         <div className="hidden items-center gap-2 md:flex">
                             <Search size={16} className="text-slate-400"/>
-                            {/* <input className="w-36 border-0 bg-transparent p-0 text-xs focus:ring-0" placeholder={tr('Search')}/> */}
                             <input className="form-in" placeholder="Search..."/>
                         </div>
                         <button type="button" onClick={() => setDarkMode(value => !value)} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
@@ -380,6 +376,9 @@ function Dashboard() {
                                 </div>
                                 <button type="button" role="menuitem" onClick={() => { setPage('My Profile'); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
                                     <UserRound size={16}/> {tr('My Profile')}
+                                </button>
+                                <button onClick={logout} disabled={logoutLoading} title={sidebarCollapsed ? 'Sign out' : undefined} className={`flex w-full items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} rounded-md py-2.5 text-sm text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-wait disabled:opacity-50`}>
+                                    <LogOut size={18}/>{!sidebarCollapsed && (logoutLoading ? 'Signing out...' : 'Sign out')}
                                 </button>
                             </div>}
                         </div>

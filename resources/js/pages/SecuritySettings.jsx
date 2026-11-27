@@ -140,7 +140,7 @@ export default function SecuritySettings({ user }) {
                 <p className="mt-1 text-sm text-slate-500">
                     Use a TOTP authenticator app as an additional sign-in step.
                 </p>
-                <p className="mt-3 text-sm">
+                <p className="my-3 text-sm">
                     {enabled ? 'Two-factor authentication is enabled.': 'Two-factor authentication is disabled.'}
                 </p>
             
