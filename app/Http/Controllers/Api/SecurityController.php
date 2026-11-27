@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Services\TwoFactorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class SecurityController extends Controller
@@ -52,6 +51,7 @@ class SecurityController extends Controller
         abort_unless($target, 404);
 
         DB::table('sessions')->where('id', $target->id)->where('user_id', $userId)->delete();
+        $request->user('web')->forceFill(['remember_token' => Str::random(60)])->save();
 
         if ($target->id === $request->session()->getId()) {
             Auth::guard('web')->logout();
@@ -73,6 +73,7 @@ class SecurityController extends Controller
             ->where('user_id', $request->user('web')->id)
             ->where('id', '!=', $request->session()->getId())
             ->delete();
+        $request->user('web')->forceFill(['remember_token' => Str::random(60)])->save();
 
         return response()->json([
             'message' => 'Other sessions revoked successfully.',
