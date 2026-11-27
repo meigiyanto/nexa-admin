@@ -19,6 +19,7 @@ class User extends Authenticatable
         'email',
         'profile_photo_path',
         'notification_preferences',
+        'localization_preferences',
         'password',
         'status',
     ];
@@ -34,6 +35,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'notification_preferences' => 'array',
+            'localization_preferences' => 'array',
         ];
     }
 
