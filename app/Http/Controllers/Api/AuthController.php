@@ -1,15 +1,15 @@
 <?php
 
-namespace App\\Http\\Controllers\\Api;
+namespace App\Http\Controllers\Api;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\User;
-use App\\Services\\TwoFactorService;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\Auth;
-use Illuminate\\Support\\Facades\\Hash;
-use Illuminate\\Validation\\ValidationException;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\TwoFactorService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -74,7 +74,7 @@ class AuthController extends Controller
             'The two-factor login challenge is no longer valid.');
 
         $code = trim($validated['code']);
-        $valid = preg_match('/^\\d{6}$/', $code)
+        $valid = preg_match('/^\d{6}$/', $code)
             ? $twoFactor->verifyCode($user->two_factor_secret, $code)
             : $twoFactor->consumeRecoveryCode($user, $code);
 
