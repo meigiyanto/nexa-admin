@@ -98,6 +98,22 @@ class SecuritySettingsTest extends TestCase
         $this->assertDatabaseMissing('sessions', ['id' => 'another-device-session']);
     }
 
+    public function test_two_factor_login_challenge_is_rate_limited_per_account(): void
+    {
+        $user = $this->twoFactorUser();
+
+        $this->postJson('/api/login', [
+            'email' => $user->email,
+            'password' => 'current-password',
+        ])->assertOk()->assertJsonPath('requires_two_factor', true);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->postJson('/api/login/two-factor', ['code' => '000000'])->assertUnprocessable();
+        }
+
+        $this->postJson('/api/login/two-factor', ['code' => '000000'])->assertTooManyRequests();
+    }
+
     public function test_pending_two_factor_setup_expires_after_ten_minutes(): void
     {
         $user = User::factory()->create(['password' => 'current-password']);
