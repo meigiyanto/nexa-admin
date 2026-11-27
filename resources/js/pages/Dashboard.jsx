@@ -197,8 +197,7 @@ function Dashboard() {
         setLogoutLoading(true);
         setNotice('');
 
-        try {
-            await axios.post('/api/logout');
+        try {            await axios.post('/api/logout');
             setUser(null);
             setPage('Overview');
             setStats({});
@@ -397,8 +396,7 @@ function Dashboard() {
                                     <p className="truncate text-sm font-semibold">{user.name}</p>
                                     <p className="truncate text-xs text-slate-500">{user.email}</p>
                                 </div>
-                                <button type="button" role="menuitem" onClick={() => { setPage('My Profile'); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
-                                    <UserRound size={16}/> {tr('My Profile')}
+                                <button type="button" role="menuitem" onClick={() => { setPage('My Profile'); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800">                                    <UserRound size={16}/> {tr('My Profile')}
                                 </button>
                             </div>}
                         </div>
@@ -412,7 +410,7 @@ function Dashboard() {
                         <>
                             <div className="mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                                 <div>
-                                    <h2 className="text-2xl font-bold tracking-tight">{tr((() => { const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hourCycle: 'h23', timeZone: localization.timezone }).format(new Date())); return hour < 11 ? 'Good morning' : hour < 15 ? 'Good afternoon' : 'Good evening'; })())}, {user.name.split(' ')[0]} 👋</h2>
+                                    <h2 className="text-2xl font-bold tracking-tight">{tr((() => { const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hourCycle: 'h23', timeZone: localization.timezone }).format(new Date())); return hour < 5 ? 'Good night' : hour < 11 ? 'Good morning' : hour < 15 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night'; })())}, {user.name.split(' ')[0]} 👋</h2>
                                     <p className="mt-1 text-sm text-slate-500">{tr("Here's what's happening with your workspace today.")}</p>
                                 </div>
                                 {can('users.create') && <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"><Plus size={17}/> {tr('Add new user')}</button>}
@@ -598,50 +596,3 @@ function Dashboard() {
 
 function UserTable({ users, localization, tr, onEdit, onDelete, onManageAccess }) {
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full min-w-[650px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-400">
-                    <tr>
-                        <th className="px-5 py-3">{tr('User')}</th>
-                        <th className="px-5 py-3">{tr('Roles')}</th>
-                        <th className="px-5 py-3">{tr('Status')}</th>
-                        <th className="px-5 py-3">{tr('Joined')}</th>
-                        <th className="px-5 py-3 text-right">{tr('Actions')}</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                    {users.map(item => (
-                        <tr key={item.id} className="hover:bg-slate-50/70">
-                            <td className="px-5 py-3">
-                                <div className="flex items-center gap-3">
-                                    <Avatar name={item.name}/>
-                                    <div>
-                                        <p className="font-semibold text-slate-700">{item.name}</p>
-                                        <p className="text-xs text-slate-400">{item.email}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td className="px-5 py-3 capitalize text-slate-500">{item.roles?.join(', ') || '—'}</td>
-                            <td className="px-5 py-3">
-                                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                    {item.status}
-                                </span>
-                            </td>
-                            <td className="px-5 py-3 text-xs text-slate-400">{formatUserDate(item.created_at, localization)}</td>
-                            <td className="px-5 py-3">
-                                <div className="flex justify-end gap-1">
-                                    {onManageAccess && <button onClick={() => onManageAccess(item)} title={tr('Manage access')} className="rounded-md p-2 text-indigo-600 hover:bg-indigo-50"><ShieldCheck size={15}/></button>}
-                                    {onEdit && <button onClick={() => onEdit(item)} title={tr('Edit user')} className="rounded-md p-2 text-slate-500 hover:bg-slate-100"><Pencil size={15}/></button>}
-                                    {onDelete && <button onClick={() => onDelete(item.id)} title={tr('Delete user')} className="rounded-md p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={15}/></button>}
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            {users.length === 0 && <p className="p-10 text-center text-sm text-slate-400">{tr('No users found.')}</p>}
-        </div>
-    );
-}
-
-export default Dashboard;
