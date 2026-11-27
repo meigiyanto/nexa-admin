@@ -53,8 +53,8 @@ button, input, select, textarea {
         border-color: #334155;
     }
     .dark .bg-white\/90 { background-color: rgb(15 23 42 / 0.9); }
-    .dark .hover\\:bg-slate-50:hover { background-color: #1e293b; }
-    .dark .hover\\:bg-slate-100:hover { background-color: #334155; }
+    .dark .hover\:bg-slate-50:hover { background-color: #1e293b; }
+    .dark .hover\:bg-slate-100:hover { background-color: #334155; }
     .dark .bg-indigo-50 { background-color: rgb(79 70 229 / 0.18); }
     .dark .text-indigo-700 { color: #a5b4fc; }
     .dark .text-indigo-600 { color: #a5b4fc; }
