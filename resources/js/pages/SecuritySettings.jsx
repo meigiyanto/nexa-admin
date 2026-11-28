@@ -4,6 +4,8 @@ import Alert from '../components/Alert';
 
 export default function SecuritySettings({ user }) {
     const [sessions, setSessions] = useState([]);
+    const [sessionError, setSessionError] = useState('');
+    const [sessionMessage, setSessionMessage] = useState('');
     const [password, setPassword] = useState('');
     const [code, setCode] = useState('');
     const [secret, setSecret] = useState('');
@@ -108,6 +110,8 @@ export default function SecuritySettings({ user }) {
                 <p className="mt-1 text-sm text-slate-500">
                     Review and revoke browsers signed in to your account.
                 </p>
+                {sessionError && <Alert type="error" onClose={() => setSessionError('')}>{sessionError}</Alert>}
+                {sessionMessage && <Alert type="success" onClose={() => setSessionMessage('')}>{sessionMessage}</Alert>}
                 <label className="mt-4 block text-sm font-medium">Current password
                     <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full" autoComplete="current-password" />
                 </label>
