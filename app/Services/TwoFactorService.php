@@ -30,7 +30,12 @@ class TwoFactorService
 
     public function verifyCode(string $secret, string $code): bool
     {
-        return $this->matchingCounter($secret, $code) !== null;
+        return $this->counterForCode($secret, $code) !== null;
+    }
+
+    public function counterForCode(string $secret, string $code): ?int
+    {
+        return $this->matchingCounter($secret, $code);
     }
 
     public function consumeTotpCode(User $user, string $code): bool
