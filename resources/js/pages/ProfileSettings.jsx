@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, KeyRound, LoaderCircle, Save, Trash2, UserRound } from 'lucide-react';
+import { Camera, KeyRound, LoaderCircle, MailCheck, Save, Trash2, UserRound } from 'lucide-react';
 import axios from 'axios';
 import SecuritySettings from './SecuritySettings';
 import Alert from '../components/Alert';
@@ -20,6 +20,8 @@ export default function ProfileSettings({ user, onUpdated }) {
     const [passwordErrors, setPasswordErrors] = useState({});
     const [passwordMessage, setPasswordMessage] = useState('');
     const [passwordSaving, setPasswordSaving] = useState(false);
+    const [verificationSending, setVerificationSending] = useState(false);
+    const [verificationMessage, setVerificationMessage] = useState('');
     const inputRef = useRef(null);
 
     useEffect(() => {
@@ -58,6 +60,19 @@ export default function ProfileSettings({ user, onUpdated }) {
             if (error.response?.status === 422) setErrors(error.response.data.errors || {});
             setMessage(error.response?.data?.message || 'Unable to update profile.');
         } finally { setSaving(false); }
+    };
+
+    const resendVerification = async () => {
+        setVerificationSending(true);
+        setVerificationMessage('');
+        try {
+            const { data } = await axios.post('/api/email/verification-notification');
+            setVerificationMessage(data.message || 'A verification link has been sent.');
+        } catch (error) {
+            setVerificationMessage(error.response?.data?.message || 'Unable to send the verification email.');
+        } finally {
+            setVerificationSending(false);
+        }
     };
 
     const submitPassword = async event => {
@@ -109,6 +124,13 @@ export default function ProfileSettings({ user, onUpdated }) {
                         </div>
                     </form>
                 </section>
+                {!user.email_verified_at && <section className="rounded-md border border-amber-300 bg-amber-50 p-6 shadow-sm dark:border-amber-800 dark:bg-amber-950/30">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div><h2 className="font-semibold text-amber-900 dark:text-amber-200">Verify your email address</h2><p className="mt-1 text-sm text-amber-800 dark:text-amber-300">Verify your email address to access dashboard features and account security settings.</p></div>
+                        <button type="button" onClick={resendVerification} disabled={verificationSending} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60">{verificationSending ? <LoaderCircle size={16} className="animate-spin"/> : <MailCheck size={16}/>} Resend verification</button>
+                    </div>
+                    {verificationMessage && <p className="mt-3 text-sm text-amber-800 dark:text-amber-300">{verificationMessage}</p>}
+                </section>}
                 <section className="rounded-md border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                     <div className="mb-6 flex items-start gap-3">
                         <span className="rounded-md bg-indigo-50 p-3 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300"><KeyRound size={20}/></span>

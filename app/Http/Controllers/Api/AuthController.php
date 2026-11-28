@@ -198,6 +198,7 @@ class AuthController extends Controller
             'user' => [
                 ...$user->only(['id', 'name', 'email', 'status']),
                 'profile_photo_url' => $user->profile_photo_url,
+                'email_verified_at' => $user->email_verified_at,
                 'two_factor_enabled' => (bool) $user->two_factor_confirmed_at,
             ],
             'roles' => $user->getRoleNames()->values(),

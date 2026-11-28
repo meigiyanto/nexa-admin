@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -47,6 +50,64 @@ class ProfileSettingsTest extends TestCase
             'id' => $user->id,
             'email_verified_at' => null,
         ]);
+    }
+
+    public function test_changing_email_sends_a_verification_notification(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create(['email' => 'before@example.com']);
+
+        $this->actingAs($user)->putJson('/api/profile', [
+            'name' => $user->name,
+            'email' => 'after@example.com',
+        ])->assertOk();
+
+        Notification::assertSentTo($user, VerifyEmail::class);
+        $this->assertNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_unverified_user_can_request_a_verification_email(): void
+    {
+        Notification::fake();
+        $user = User::factory()->unverified()->create();
+
+        $this->actingAs($user)->postJson('/api/email/verification-notification')
+            ->assertOk();
+
+        Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_unverified_user_cannot_access_protected_application_data(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $this->actingAs($user)->getJson('/api/dashboard')->assertForbidden();
+    }
+
+    public function test_signed_verification_link_marks_the_authenticated_users_email_as_verified(): void
+    {
+        $user = User::factory()->unverified()->create();
+        $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(30), [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+        ]);
+
+        $this->actingAs($user)->getJson($url)->assertOk();
+
+        $this->assertNotNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_verification_link_cannot_verify_another_users_email(): void
+    {
+        $user = User::factory()->unverified()->create();
+        $otherUser = User::factory()->unverified()->create();
+        $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(30), [
+            'id' => $otherUser->id,
+            'hash' => sha1($otherUser->email),
+        ]);
+
+        $this->actingAs($user)->getJson($url)->assertForbidden();
+        $this->assertNull($otherUser->fresh()->email_verified_at);
     }
 
     public function test_user_cannot_use_another_accounts_email_address(): void
