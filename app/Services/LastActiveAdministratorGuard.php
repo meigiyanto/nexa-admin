@@ -10,16 +10,18 @@ class LastActiveAdministratorGuard
     /**
      * Lock active administrator rows in a consistent order.
      *
-     * Call this inside a database transaction before locking the target user.
+     * Call this inside a transaction before locking the target user.
      */
     public function lockActiveAdminIds(): Collection
     {
-        return User::role('admin')
-            ->where('status', 'active')
-            ->orderBy('users.id')
-            ->lockForUpdate()
-            ->get(['users.id'])
-            ->modelKeys();
+        return collect(
+            User::role('admin')
+                ->where('status', 'active')
+                ->orderBy('users.id')
+                ->lockForUpdate()
+                ->get(['users.id'])
+                ->modelKeys(),
+        );
     }
 
     public function isLastActiveAdmin(User $user, Collection $activeAdminIds): bool
