@@ -1,13 +1,13 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\\Feature;
 
-use App\Models\User;
-use App\Notifications\SystemActivityNotification;
-use App\Services\SystemActivityNotifier;
-use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use App\\Models\\User;
+use App\\Notifications\\SystemActivityNotification;
+use App\\Services\\SystemActivityNotifier;
+use Database\\Seeders\\PermissionSeeder;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+use Tests\\TestCase;
 
 class SettingsPreferencesTest extends TestCase
 {
@@ -47,6 +47,42 @@ class SettingsPreferencesTest extends TestCase
         ])->assertOk()->assertJsonPath('notification_preferences.user_activity', false);
 
         $this->assertSame($preferences, $user->fresh()->notification_preferences);
+    }
+
+    public function test_unknown_notification_preference_keys_are_rejected(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('admin');
+
+        $this->actingAs($user)->putJson('/api/settings', [
+            'notification_preferences' => [
+                'user_activity' => false,
+                'access_changes' => true,
+                'system_updates' => true,
+                'admin_override' => true,
+            ],
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('notification_preferences');
+
+        $this->assertNull($user->fresh()->notification_preferences);
+    }
+
+    public function test_unknown_localization_preference_keys_are_rejected(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('admin');
+
+        $this->actingAs($user)->putJson('/api/settings', [
+            'localization_preferences' => [
+                'locale' => 'id',
+                'timezone' => 'Asia/Jakarta',
+                'date_format' => 'dmy',
+                'debug' => true,
+            ],
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('localization_preferences');
+
+        $this->assertNull($user->fresh()->localization_preferences);
     }
 
     public function test_user_without_settings_update_permission_cannot_change_preferences(): void
@@ -124,7 +160,12 @@ class SettingsPreferencesTest extends TestCase
             ],
         ]);
 
-        $user->notify(new SystemActivityNotification('User created', 'A user was created.', 'user.created', 'Admin'));
+        $user->notify(new SystemActivityNotification(
+            'User created',
+            'A user was created.',
+            'user.created',
+            'Admin',
+        ));
 
         $this->assertSame(0, $user->notifications()->count());
     }
