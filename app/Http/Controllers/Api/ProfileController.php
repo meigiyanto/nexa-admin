@@ -69,6 +69,10 @@ class ProfileController extends Controller
 
         $user->save();
 
+        if ($emailChanged) {
+            $user->sendEmailVerificationNotification();
+        }
+
         if ($oldPhoto && $oldPhoto !== $user->profile_photo_path) {
             Storage::disk('public')->delete($oldPhoto);
         }
