@@ -10,6 +10,7 @@ import NotificationBell from '../components/NotificationBell';
 import NotificationSettings from '../components/NotificationSettings';
 import LocalizationSettings from '../components/LocalizationSettings';
 import Alert from '../components/Alert';
+import DashboardLayout from '../layouts/DashboardLayout';
 
 const translations = {
     Workspace: 'Ruang kerja', Overview: 'Ringkasan', Users: 'Pengguna', Roles: 'Peran', Analytics: 'Analitik', Settings: 'Pengaturan',

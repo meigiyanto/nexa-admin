@@ -3,6 +3,7 @@ import { Activity, Download, Users, UserCheck, UserX, RefreshCw } from 'lucide-r
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import axios from 'axios';
 import Alert from '../components/Alert';
+import DashboardLayout from '../layouts/DashboardLayout';
 
 function formatDate(date) {
     const year = date.getFullYear();
@@ -71,7 +72,7 @@ function AnalyticsPage({ canExport = false }) {
     ];
 
     return (
-        <div>
+        <DashboardLayout>
             <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">Analytics</h2>
@@ -140,7 +141,7 @@ function AnalyticsPage({ canExport = false }) {
                 {!loading && report?.registrations?.length > 0 && report.registrations.every(item => Number(item.users) === 0) && <p className="mt-3 text-center text-sm text-slate-500">No new users registered in this period. The chart shows zero registrations for each day.</p>}
                 {!loading && report?.registrations?.length === 0 && <p className="mt-3 text-center text-sm text-slate-400">No registration data is available for this period.</p>}
             </section>
-        </div>
+        </DashboardLayout>
     );
 }
 
