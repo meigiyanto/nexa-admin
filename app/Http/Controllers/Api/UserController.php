@@ -112,7 +112,7 @@ class UserController extends Controller
 
         if ($originalStatus === 'active' && $user->status === 'inactive') {
             DB::transaction(function () use ($user): void {
-                if (config('session.driver') === 'database' && \\Illuminate\\Support\\Facades\\Schema::hasTable('sessions')) {
+                if (config('session.driver') === 'database' && \Illuminate\Support\Facades\Schema::hasTable('sessions')) {
                     DB::table('sessions')->where('user_id', $user->id)->delete();
                 }
 
