@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\LastActiveAdministratorGuard;
 use App\Services\SystemActivityNotifier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -96,43 +97,53 @@ class UserController extends Controller
             return response()->json(['message' => 'You cannot deactivate your own account.'], 422);
         }
 
-        if ($user->hasRole('admin') && ($validated['status'] ?? null) === 'inactive' && $user->status === 'active') {
-            abort_if(
-                User::role('admin')->where('status', 'active')->count() <= 1,
-                422,
-                'The last active administrator cannot be deactivated.'
-            );
-        }
-
         if (empty($validated['password'] ?? null)) {
             unset($validated['password']);
         }
 
-        $originalStatus = $user->status;
-        $user->update($validated);
+        [$originalStatus, $updatedUser] = DB::transaction(function () use ($validated, $user): array {
+            $guard = app(LastActiveAdministratorGuard::class);
+            $activeAdminIds = ($validated['status'] ?? null) === 'inactive'
+                ? $guard->lockActiveAdminIds()
+                : collect();
 
-        if ($originalStatus === 'active' && $user->status === 'inactive') {
-            DB::transaction(function () use ($user): void {
+            $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
+            $originalStatus = $lockedUser->status;
+
+            if (
+                ($validated['status'] ?? null) === 'inactive' &&
+                $originalStatus === 'active' &&
+                $lockedUser->hasRole('admin') &&
+                $guard->isLastActiveAdmin($lockedUser, $activeAdminIds)
+            ) {
+                abort(422, 'The last active administrator cannot be deactivated.');
+            }
+
+            $lockedUser->update($validated);
+
+            if ($originalStatus === 'active' && $lockedUser->status === 'inactive') {
                 if (config('session.driver') === 'database' && Schema::hasTable('sessions')) {
-                    DB::table('sessions')->where('user_id', $user->id)->delete();
+                    DB::table('sessions')->where('user_id', $lockedUser->id)->delete();
                 }
 
-                $user->tokens()->delete();
-            });
-        }
+                $lockedUser->tokens()->delete();
+            }
 
-        if ($originalStatus !== $user->status) {
+            return [$originalStatus, $lockedUser];
+        });
+
+        if ($originalStatus !== $updatedUser->status) {
             app(SystemActivityNotifier::class)->notifyRecipients(
                 $request->user(),
                 'User status changed',
-                "{$user->name} was {$user->status}.",
+                "{$updatedUser->name} was {$updatedUser->status}.",
                 'user.status.updated',
                 '/users',
             );
         }
 
         return response()->json([
-            'user' => $this->userData($user->fresh()->load('roles:id,name')),
+            'user' => $this->userData($updatedUser->fresh()->load('roles:id,name')),
         ]);
     }
 
@@ -140,16 +151,24 @@ class UserController extends Controller
     {
         abort_if($request->user()->is($user), 422, 'You cannot delete your own account.');
 
-        if ($user->hasRole('admin') && $user->status === 'active') {
-            abort_if(
-                User::role('admin')->where('status', 'active')->count() <= 1,
-                422,
-                'The last active administrator cannot be deleted.'
-            );
-        }
+        $deletedName = DB::transaction(function () use ($user): string {
+            $guard = app(LastActiveAdministratorGuard::class);
+            $activeAdminIds = $guard->lockActiveAdminIds();
+            $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
 
-        $deletedName = $user->name;
-        $user->delete();
+            if (
+                $lockedUser->hasRole('admin') &&
+                $lockedUser->status === 'active' &&
+                $guard->isLastActiveAdmin($lockedUser, $activeAdminIds)
+            ) {
+                abort(422, 'The last active administrator cannot be deleted.');
+            }
+
+            $name = $lockedUser->name;
+            $lockedUser->delete();
+
+            return $name;
+        });
 
         app(SystemActivityNotifier::class)->notifyRecipients(
             $request->user(),
