@@ -165,12 +165,13 @@ class NotificationCenterTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('viewer');
-        $first = $user->notify(new SystemActivityNotification(
+        $user->notify(new SystemActivityNotification(
             'First', 'First notification.', 'test', 'System',
         ));
-        $second = $user->notify(new SystemActivityNotification(
+        $user->notify(new SystemActivityNotification(
             'Second', 'Second notification.', 'test', 'System',
         ));
+        $secondId = $user->notifications()->latest()->value('id');
 
         $this->actingAs($user)->getJson('/api/notifications/unread-count')
             ->assertOk()
@@ -183,7 +184,7 @@ class NotificationCenterTest extends TestCase
             ->assertOk()
             ->assertJsonPath('unread_count', 1);
 
-        $this->deleteJson('/api/notifications/'.$second->id)->assertOk();
+        $this->deleteJson('/api/notifications/'.$secondId)->assertOk();
 
         $this->getJson('/api/notifications/unread-count')
             ->assertOk()
