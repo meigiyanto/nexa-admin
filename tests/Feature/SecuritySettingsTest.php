@@ -183,6 +183,28 @@ class SecuritySettingsTest extends TestCase
         $this->assertNotSame($response->json('recovery_codes.0'), $user->fresh()->two_factor_recovery_codes[0]);
     }
 
+
+    public function test_totp_code_cannot_be_reused_to_regenerate_recovery_codes(): void
+    {
+        $user = $this->twoFactorUser();
+        $code = $this->totpCode($user->two_factor_secret);
+
+        $firstResponse = $this->actingAs($user)->postJson('/api/security/two-factor/recovery-codes', [
+            'current_password' => 'current-password',
+            'code' => $code,
+        ])->assertOk()->assertJsonCount(10, 'recovery_codes');
+
+        $firstCodes = $user->fresh()->two_factor_recovery_codes;
+
+        $this->postJson('/api/security/two-factor/recovery-codes', [
+            'current_password' => 'current-password',
+            'code' => $code,
+        ])->assertUnprocessable()->assertJsonValidationErrors('code');
+
+        $this->assertSame($firstCodes, $user->fresh()->two_factor_recovery_codes);
+        $this->assertNotSame($firstResponse->json('recovery_codes.0'), $firstCodes[0]);
+    }
+
     private function twoFactorUser(array $attributes = []): User
     {
         $secret = app(TwoFactorService::class)->generateSecret();
