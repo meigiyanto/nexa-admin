@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class TwoFactorService
@@ -29,32 +30,28 @@ class TwoFactorService
 
     public function verifyCode(string $secret, string $code): bool
     {
-        $code = preg_replace('/\\s+/', '', $code);
+        return $this->matchingCounter($secret, $code) !== null;
+    }
 
-        if (! preg_match('/^\\d{6}$/', $code)) {
-            return false;
-        }
+    public function consumeTotpCode(User $user, string $code): bool
+    {
+        return DB::transaction(function () use ($user, $code): bool {
+            $lockedUser = User::query()->lockForUpdate()->find($user->getKey());
 
-        $key = $this->base32Decode($secret);
-        $counter = intdiv(time(), 30);
-
-        for ($offset = -1; $offset <= 1; $offset++) {
-            $value = $counter + $offset;
-            $message = pack('N2', 0, $value);
-            $hash = hash_hmac('sha1', $message, $key, true);
-            $position = ord($hash[19]) & 0x0f;
-            $binary = ((ord($hash[$position]) & 0x7f) << 24)
-                | ((ord($hash[$position + 1]) & 0xff) << 16)
-                | ((ord($hash[$position + 2]) & 0xff) << 8)
-                | (ord($hash[$position + 3]) & 0xff);
-            $expected = str_pad((string) ($binary % 1000000), 6, '0', STR_PAD_LEFT);
-
-            if (hash_equals($expected, $code)) {
-                return true;
+            if (! $lockedUser || ! $lockedUser->two_factor_secret || ! $lockedUser->two_factor_confirmed_at) {
+                return false;
             }
-        }
 
-        return false;
+            $counter = $this->matchingCounter($lockedUser->two_factor_secret, $code);
+
+            if ($counter === null || $counter <= (int) ($lockedUser->two_factor_last_used_at ?? -1)) {
+                return false;
+            }
+
+            $lockedUser->forceFill(['two_factor_last_used_at' => $counter])->save();
+
+            return true;
+        });
     }
 
     public function generateRecoveryCodes(): array
@@ -72,18 +69,61 @@ class TwoFactorService
 
     public function consumeRecoveryCode(User $user, string $code): bool
     {
-        $codes = $user->two_factor_recovery_codes ?? [];
+        return DB::transaction(function () use ($user, $code): bool {
+            $lockedUser = User::query()->lockForUpdate()->find($user->getKey());
 
-        foreach ($codes as $index => $hash) {
-            if (Hash::check(strtoupper(trim($code)), $hash)) {
-                unset($codes[$index]);
-                $user->forceFill(['two_factor_recovery_codes' => array_values($codes)])->save();
+            if (! $lockedUser) {
+                return false;
+            }
 
-                return true;
+            $codes = $lockedUser->two_factor_recovery_codes ?? [];
+
+            foreach ($codes as $index => $hash) {
+                if (Hash::check(strtoupper(trim($code)), $hash)) {
+                    unset($codes[$index]);
+                    $lockedUser->forceFill(['two_factor_recovery_codes' => array_values($codes)])->save();
+
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    }
+
+    private function matchingCounter(string $secret, string $code): ?int
+    {
+        $code = preg_replace('/\\s+/', '', $code);
+
+        if (! preg_match('/^\\d{6}$/', $code)) {
+            return null;
+        }
+
+        $key = $this->base32Decode($secret);
+        $counter = intdiv(time(), 30);
+        $matched = null;
+
+        for ($offset = -1; $offset <= 1; $offset++) {
+            $value = $counter + $offset;
+            if ($value < 0) {
+                continue;
+            }
+
+            $message = pack('N2', 0, $value);
+            $hash = hash_hmac('sha1', $message, $key, true);
+            $position = ord($hash[19]) & 0x0f;
+            $binary = ((ord($hash[$position]) & 0x7f) << 24)
+                | ((ord($hash[$position + 1]) & 0xff) << 16)
+                | ((ord($hash[$position + 2]) & 0xff) << 8)
+                | (ord($hash[$position + 3]) & 0xff);
+            $expected = str_pad((string) ($binary % 1000000), 6, '0', STR_PAD_LEFT);
+
+            if (hash_equals($expected, $code) && ($matched === null || $value > $matched)) {
+                $matched = $value;
             }
         }
 
-        return false;
+        return $matched;
     }
 
     private function base32Encode(string $value): string
@@ -112,7 +152,7 @@ class TwoFactorService
         foreach (str_split($value) as $character) {
             $position = strpos(self::BASE32, $character);
             if ($position === false) {
-                throw new \InvalidArgumentException('Invalid TOTP secret.');
+                throw new \\InvalidArgumentException('Invalid TOTP secret.');
             }
             $binary .= str_pad(decbin($position), 5, '0', STR_PAD_LEFT);
         }
