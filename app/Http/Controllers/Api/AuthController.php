@@ -100,7 +100,7 @@ class AuthController extends Controller
 
         $code = trim($validated['code']);
         $valid = preg_match('/^\d{6}$/', $code)
-            ? $twoFactor->verifyCode($user->two_factor_secret, $code)
+            ? $twoFactor->consumeTotpCode($user, $code)
             : $twoFactor->consumeRecoveryCode($user, $code);
 
         if (! $valid) {

@@ -121,7 +121,9 @@ class SecurityController extends Controller
 
         $secret = Crypt::decryptString($encryptedSecret);
 
-        if (! $twoFactor->verifyCode($secret, $validated['code'])) {
+        $counter = $twoFactor->counterForCode($secret, $validated['code']);
+
+        if ($counter === null) {
             throw ValidationException::withMessages(['code' => ['The authenticator code is invalid.']]);
         }
 
@@ -129,6 +131,7 @@ class SecurityController extends Controller
         $user->forceFill([
             'two_factor_secret' => $secret,
             'two_factor_recovery_codes' => $twoFactor->hashRecoveryCodes($codes),
+            'two_factor_last_used_at' => $counter,
             'two_factor_confirmed_at' => now(),
         ])->save();
 
@@ -151,7 +154,7 @@ class SecurityController extends Controller
         abort_unless($user->two_factor_confirmed_at && $user->two_factor_secret, 409, 'Two-factor authentication is not enabled.');
 
         $valid = preg_match('/^\d{6}$/', $validated['code'])
-            ? $twoFactor->verifyCode($user->two_factor_secret, $validated['code'])
+            ? $twoFactor->consumeTotpCode($user, $validated['code'])
             : $twoFactor->consumeRecoveryCode($user, $validated['code']);
 
         if (! $valid) {
@@ -162,6 +165,7 @@ class SecurityController extends Controller
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
+            'two_factor_last_used_at' => null,
         ])->save();
 
         return response()->json(['message' => 'Two-factor authentication disabled.']);
