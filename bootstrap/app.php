@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use App\Http\Middleware\EnsureActiveAccount;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Register Laravel's default web and api middleware groups.
+        $middleware->alias(['active' => EnsureActiveAccount::class]);
         // API session authentication is applied explicitly in routes/api.php.
     })
     // API routes use the web middleware group explicitly for session auth.
