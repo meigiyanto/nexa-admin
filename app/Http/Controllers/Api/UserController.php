@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -112,7 +113,7 @@ class UserController extends Controller
 
         if ($originalStatus === 'active' && $user->status === 'inactive') {
             DB::transaction(function () use ($user): void {
-                if (config('session.driver') === 'database' && \Illuminate\Support\Facades\Schema::hasTable('sessions')) {
+                if (config('session.driver') === 'database' && Schema::hasTable('sessions')) {
                     DB::table('sessions')->where('user_id', $user->id)->delete();
                 }
 

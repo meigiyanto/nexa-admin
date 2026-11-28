@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -107,7 +108,7 @@ class ProfileSettingsTest extends TestCase
             'password_confirmation' => 'new-password-123',
         ])->assertOk()->assertJsonPath('message', 'Password changed successfully.');
 
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('new-password-123', $user->fresh()->password));
+        $this->assertTrue(Hash::check('new-password-123', $user->fresh()->password));
     }
 
     public function test_password_change_requires_the_correct_current_password(): void

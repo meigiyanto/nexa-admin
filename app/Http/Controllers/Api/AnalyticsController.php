@@ -61,7 +61,7 @@ class AnalyticsController extends Controller
                 });
 
             fclose($output);
-        }, 'user-analytics-' . $startDate->toDateString() . '-to-' . $endDate->toDateString() . '.csv', [
+        }, 'user-analytics-'.$startDate->toDateString().'-to-'.$endDate->toDateString().'.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
@@ -87,6 +87,6 @@ class AnalyticsController extends Controller
     {
         $value ??= '';
 
-        return preg_match('/^[=+@\\-\\t\\r]/', $value) === 1 ? "'" . $value : $value;
+        return preg_match('/^[=+@\\-\\t\\r]/', $value) === 1 ? "'".$value : $value;
     }
 }

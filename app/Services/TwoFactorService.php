@@ -116,11 +116,11 @@ class TwoFactorService
 
             $message = pack('N2', 0, $value);
             $hash = hash_hmac('sha1', $message, $key, true);
-            $position = ord($hash[19]) & 0x0f;
-            $binary = ((ord($hash[$position]) & 0x7f) << 24)
-                | ((ord($hash[$position + 1]) & 0xff) << 16)
-                | ((ord($hash[$position + 2]) & 0xff) << 8)
-                | (ord($hash[$position + 3]) & 0xff);
+            $position = ord($hash[19]) & 0x0F;
+            $binary = ((ord($hash[$position]) & 0x7F) << 24)
+                | ((ord($hash[$position + 1]) & 0xFF) << 16)
+                | ((ord($hash[$position + 2]) & 0xFF) << 8)
+                | (ord($hash[$position + 3]) & 0xFF);
             $expected = str_pad((string) ($binary % 1000000), 6, '0', STR_PAD_LEFT);
 
             if (hash_equals($expected, $code) && ($matched === null || $value > $matched)) {

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Notifications\SystemActivityNotification;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -22,7 +23,7 @@ class NotificationCenterTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('viewer');
-        $user->notify(new \App\Notifications\SystemActivityNotification(
+        $user->notify(new SystemActivityNotification(
             'Account created', 'A new account was created.', 'user.created', 'System',
         ));
 
@@ -43,10 +44,10 @@ class NotificationCenterTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('viewer');
-        $first = $user->notify(new \App\Notifications\SystemActivityNotification(
+        $first = $user->notify(new SystemActivityNotification(
             'First', 'First notification.', 'test', 'System',
         ));
-        $second = $user->notify(new \App\Notifications\SystemActivityNotification(
+        $second = $user->notify(new SystemActivityNotification(
             'Second', 'Second notification.', 'test', 'System',
         ));
         $ids = $user->notifications()->latest()->pluck('id');
@@ -64,7 +65,7 @@ class NotificationCenterTest extends TestCase
         $owner->assignRole('viewer');
         $other = User::factory()->create();
         $other->assignRole('viewer');
-        $other->notify(new \App\Notifications\SystemActivityNotification(
+        $other->notify(new SystemActivityNotification(
             'Private', 'Private notification.', 'test', 'System',
         ));
         $id = $other->notifications()->value('id');
@@ -77,7 +78,7 @@ class NotificationCenterTest extends TestCase
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
-        $admin->notify(new \App\Notifications\SystemActivityNotification(
+        $admin->notify(new SystemActivityNotification(
             'First', 'First notification.', 'test', 'System',
         ));
 
@@ -89,7 +90,7 @@ class NotificationCenterTest extends TestCase
     {
         $viewer = User::factory()->create();
         $viewer->assignRole('viewer');
-        $viewer->notify(new \App\Notifications\SystemActivityNotification(
+        $viewer->notify(new SystemActivityNotification(
             'First', 'First notification.', 'test', 'System',
         ));
 
@@ -101,7 +102,7 @@ class NotificationCenterTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('viewer');
-        $user->notify(new \App\Notifications\SystemActivityNotification(
+        $user->notify(new SystemActivityNotification(
             'First', 'First notification.', 'test', 'System',
         ));
         $id = $user->notifications()->value('id');
@@ -126,7 +127,7 @@ class NotificationCenterTest extends TestCase
 
         $this->assertDatabaseHas('notifications', [
             'notifiable_id' => $recipient->id,
-            'type' => \App\Notifications\SystemActivityNotification::class,
+            'type' => SystemActivityNotification::class,
         ]);
         $this->assertSame(0, $admin->notifications()->count());
     }
@@ -145,14 +146,14 @@ class NotificationCenterTest extends TestCase
 
         $this->assertDatabaseHas('notifications', [
             'notifiable_id' => $recipient->id,
-            'type' => \App\Notifications\SystemActivityNotification::class,
+            'type' => SystemActivityNotification::class,
         ]);
     }
 
     public function test_system_activity_notifications_are_persisted_and_broadcast(): void
     {
         $user = User::factory()->make();
-        $notification = new \App\Notifications\SystemActivityNotification(
+        $notification = new SystemActivityNotification(
             'Realtime update', 'A new activity occurred.', 'test.realtime', 'System',
         );
 
