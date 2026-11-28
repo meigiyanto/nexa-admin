@@ -50,6 +50,29 @@ class SecuritySettingsTest extends TestCase
             ->assertJsonPath('user.two_factor_enabled', true);
     }
 
+    public function test_totp_code_can_only_be_used_once_for_login(): void
+    {
+        $user = $this->twoFactorUser();
+        $code = $this->totpCode($user->two_factor_secret);
+
+        $this->postJson('/api/login', [
+            'email' => $user->email,
+            'password' => 'current-password',
+        ])->assertOk()->assertJsonPath('requires_two_factor', true);
+
+        $this->postJson('/api/login/two-factor', ['code' => $code])->assertOk();
+        $this->postJson('/api/logout')->assertOk();
+
+        $this->postJson('/api/login', [
+            'email' => $user->email,
+            'password' => 'current-password',
+        ])->assertOk()->assertJsonPath('requires_two_factor', true);
+
+        $this->postJson('/api/login/two-factor', ['code' => $code])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('code');
+    }
+
     public function test_recovery_code_can_only_be_used_once_for_login(): void
     {
         $user = $this->twoFactorUser();
