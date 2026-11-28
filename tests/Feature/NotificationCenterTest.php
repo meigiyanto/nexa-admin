@@ -160,4 +160,33 @@ class NotificationCenterTest extends TestCase
         $this->assertSame(['database', 'broadcast'], $notification->via($user));
         $this->assertInstanceOf(BroadcastMessage::class, $notification->toBroadcast($user));
     }
+
+    public function test_unread_count_endpoint_tracks_only_unread_notifications(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('viewer');
+        $first = $user->notify(new SystemActivityNotification(
+            'First', 'First notification.', 'test', 'System',
+        ));
+        $second = $user->notify(new SystemActivityNotification(
+            'Second', 'Second notification.', 'test', 'System',
+        ));
+
+        $this->actingAs($user)->getJson('/api/notifications/unread-count')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 2);
+
+        $firstId = $user->notifications()->oldest()->value('id');
+        $this->patchJson("/api/notifications/{$firstId}/read")->assertOk();
+
+        $this->getJson('/api/notifications/unread-count')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1);
+
+        $this->deleteJson('/api/notifications/'.$second->id)->assertOk();
+
+        $this->getJson('/api/notifications/unread-count')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 0);
+    }
 }
