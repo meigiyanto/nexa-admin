@@ -22,7 +22,7 @@ Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink']
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])
     ->middleware(['web', 'throttle:5,1']);
 
-Route::middleware(['web', 'auth:web'])->group(function () {
+Route::middleware(['web', 'auth:web', 'active'])->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::put('/profile', [ProfileController::class, 'update']);
