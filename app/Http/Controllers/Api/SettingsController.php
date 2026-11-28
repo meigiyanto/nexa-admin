@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\\Http\\Controllers\\Api;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\\Http\\Controllers\\Controller;
+use Illuminate\\Http\\JsonResponse;
+use Illuminate\\Http\\Request;
+use Illuminate\\Validation\\Rule;
 
 class SettingsController extends Controller
 {
@@ -40,14 +40,40 @@ class SettingsController extends Controller
     public function update(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'notification_preferences' => ['sometimes', 'required', 'array'],
-            'notification_preferences.user_activity' => ['required_with:notification_preferences', 'boolean'],
-            'notification_preferences.access_changes' => ['required_with:notification_preferences', 'boolean'],
-            'notification_preferences.system_updates' => ['required_with:notification_preferences', 'boolean'],
-            'localization_preferences' => ['sometimes', 'required', 'array'],
-            'localization_preferences.locale' => ['required_with:localization_preferences', Rule::in(['en', 'id'])],
-            'localization_preferences.timezone' => ['required_with:localization_preferences', 'timezone'],
-            'localization_preferences.date_format' => ['required_with:localization_preferences', Rule::in(['dmy', 'mdy', 'ymd'])],
+            'notification_preferences' => [
+                'sometimes',
+                'required',
+                'array:user_activity,access_changes,system_updates',
+            ],
+            'notification_preferences.user_activity' => [
+                'required_with:notification_preferences',
+                'boolean',
+            ],
+            'notification_preferences.access_changes' => [
+                'required_with:notification_preferences',
+                'boolean',
+            ],
+            'notification_preferences.system_updates' => [
+                'required_with:notification_preferences',
+                'boolean',
+            ],
+            'localization_preferences' => [
+                'sometimes',
+                'required',
+                'array:locale,timezone,date_format',
+            ],
+            'localization_preferences.locale' => [
+                'required_with:localization_preferences',
+                Rule::in(['en', 'id']),
+            ],
+            'localization_preferences.timezone' => [
+                'required_with:localization_preferences',
+                'timezone',
+            ],
+            'localization_preferences.date_format' => [
+                'required_with:localization_preferences',
+                Rule::in(['dmy', 'mdy', 'ymd']),
+            ],
         ]);
 
         abort_if(
