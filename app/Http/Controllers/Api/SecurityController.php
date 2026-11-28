@@ -181,8 +181,8 @@ class SecurityController extends Controller
 
         abort_unless($user->two_factor_confirmed_at && $user->two_factor_secret, 409, 'Two-factor authentication is not enabled.');
 
-        if (! $twoFactor->verifyCode($user->two_factor_secret, $validated['code'])) {
-            throw ValidationException::withMessages(['code' => ['The authenticator code is invalid.']]);
+        if (! $twoFactor->consumeTotpCode($user, $validated['code'])) {
+            throw ValidationException::withMessages(['code' => ['The authenticator code is invalid or has already been used.']]);
         }
 
         $codes = $twoFactor->generateRecoveryCodes();
