@@ -110,6 +110,16 @@ class UserController extends Controller
         $originalStatus = $user->status;
         $user->update($validated);
 
+        if ($originalStatus === 'active' && $user->status === 'inactive') {
+            DB::transaction(function () use ($user): void {
+                if (config('session.driver') === 'database' && \\Illuminate\\Support\\Facades\\Schema::hasTable('sessions')) {
+                    DB::table('sessions')->where('user_id', $user->id)->delete();
+                }
+
+                $user->tokens()->delete();
+            });
+        }
+
         if ($originalStatus !== $user->status) {
             app(SystemActivityNotifier::class)->notifyRecipients(
                 $request->user(),
