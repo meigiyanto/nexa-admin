@@ -151,7 +151,7 @@ class SecurityController extends Controller
         abort_unless($user->two_factor_confirmed_at && $user->two_factor_secret, 409, 'Two-factor authentication is not enabled.');
 
         $valid = preg_match('/^\d{6}$/', $validated['code'])
-            ? $twoFactor->verifyCode($user->two_factor_secret, $validated['code'])
+            ? $twoFactor->consumeTotpCode($user, $validated['code'])
             : $twoFactor->consumeRecoveryCode($user, $validated['code']);
 
         if (! $valid) {
