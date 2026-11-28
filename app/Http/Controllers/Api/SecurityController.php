@@ -129,6 +129,7 @@ class SecurityController extends Controller
         $user->forceFill([
             'two_factor_secret' => $secret,
             'two_factor_recovery_codes' => $twoFactor->hashRecoveryCodes($codes),
+            'two_factor_last_used_at' => null,
             'two_factor_confirmed_at' => now(),
         ])->save();
 
@@ -162,6 +163,7 @@ class SecurityController extends Controller
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
+            'two_factor_last_used_at' => null,
         ])->save();
 
         return response()->json(['message' => 'Two-factor authentication disabled.']);
