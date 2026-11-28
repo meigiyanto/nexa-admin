@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\LastActiveAdministratorGuard;
 use App\Services\SystemActivityNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -61,42 +63,59 @@ class UserAccessController extends Controller
             return response()->json(['message' => 'One or more roles are invalid.'], 422);
         }
 
-        if ($roles->contains('name', 'admin') && ! $user->hasRole('admin') && ! $request->user()->can('users.assign-admin-role')) {
-            abort(403, 'You cannot assign the admin role.');
-        }
+        $actor = $request->user();
 
-        $actorPermissions = $request->user()->getAllPermissions()->pluck('name');
-        $newRolePermissions = $roles
-            ->reject(fn (Role $role): bool => $user->hasRole($role->name) || ($role->name === 'admin' && $request->user()->can('users.assign-admin-role')))
-            ->flatMap(fn (Role $role) => $role->permissions()->pluck('name'))
-            ->unique();
+        $updatedUser = DB::transaction(function () use ($actor, $roles, $user): User {
+            $guard = app(LastActiveAdministratorGuard::class);
+            $activeAdminIds = $guard->lockActiveAdminIds();
+            $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
 
-        abort_if(
-            $newRolePermissions->diff($actorPermissions)->isNotEmpty(),
-            403,
-            'You cannot assign a role with permissions that you do not have.'
-        );
+            if (
+                $roles->contains('name', 'admin') &&
+                ! $lockedUser->hasRole('admin') &&
+                ! $actor->can('users.assign-admin-role')
+            ) {
+                abort(403, 'You cannot assign the admin role.');
+            }
 
-        $willRemainAdmin = $roles->contains('name', 'admin');
-        if ($user->hasRole('admin') && ! $willRemainAdmin && $user->status === 'active') {
+            $actorPermissions = $actor->getAllPermissions()->pluck('name');
+            $newRolePermissions = $roles
+                ->reject(fn (Role $role): bool => $lockedUser->hasRole($role->name) ||
+                    ($role->name === 'admin' && $actor->can('users.assign-admin-role')))
+                ->flatMap(fn (Role $role) => $role->permissions()->pluck('name'))
+                ->unique();
+
             abort_if(
-                User::role('admin')->where('status', 'active')->count() <= 1,
-                422,
-                'The last active administrator cannot lose the admin role.'
+                $newRolePermissions->diff($actorPermissions)->isNotEmpty(),
+                403,
+                'You cannot assign a role with permissions that you do not have.'
             );
-        }
 
-        $user->syncRoles($roles);
+            $willRemainAdmin = $roles->contains('name', 'admin');
+
+            if (
+                $lockedUser->hasRole('admin') &&
+                ! $willRemainAdmin &&
+                $lockedUser->status === 'active' &&
+                $guard->isLastActiveAdmin($lockedUser, $activeAdminIds)
+            ) {
+                abort(422, 'The last active administrator cannot lose the admin role.');
+            }
+
+            $lockedUser->syncRoles($roles);
+
+            return $lockedUser;
+        });
 
         app(SystemActivityNotifier::class)->notifyRecipients(
-            $request->user(),
+            $actor,
             'User roles updated',
-            "Roles for {$user->name} are now: ".$roles->pluck('name')->join(', ').'.',
+            "Roles for {$updatedUser->name} are now: ".$roles->pluck('name')->join(', ').'.',
             'user.roles.updated',
             '/users',
         );
 
-        return $this->show($request, $user);
+        return $this->show($request, $updatedUser);
     }
 
     public function assignPermissions(Request $request, User $user): JsonResponse
