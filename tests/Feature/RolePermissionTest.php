@@ -116,6 +116,77 @@ class RolePermissionTest extends TestCase
         $this->assertSame('active', $admin->fresh()->status);
     }
 
+    public function test_last_active_administrator_cannot_lose_admin_role(): void
+    {
+        $editorRole = Role::findByName('editor', 'web');
+        $editorRole->givePermissionTo('users.assign-roles');
+
+        $editor = User::factory()->create();
+        $editor->assignRole($editorRole);
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $this->actingAs($editor)
+            ->putJson("/api/users/{$admin->id}/roles", [
+                'roles' => ['viewer'],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'message',
+                'The last active administrator cannot lose the admin role.',
+            );
+
+        $this->assertTrue($admin->fresh()->hasRole('admin'));
+    }
+
+    public function test_last_active_administrator_cannot_be_deleted(): void
+    {
+        $editorRole = Role::findByName('editor', 'web');
+        $editorRole->givePermissionTo('users.delete');
+
+        $editor = User::factory()->create();
+        $editor->assignRole($editorRole);
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $this->actingAs($editor)
+            ->deleteJson("/api/users/{$admin->id}")
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'message',
+                'The last active administrator cannot be deleted.',
+            );
+
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
+        $this->assertTrue($admin->fresh()->hasRole('admin'));
+    }
+
+    public function test_active_administrator_can_be_demoted_when_another_admin_exists(): void
+    {
+        $editorRole = Role::findByName('editor', 'web');
+        $editorRole->givePermissionTo('users.assign-roles');
+
+        $editor = User::factory()->create();
+        $editor->assignRole($editorRole);
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $otherAdmin = User::factory()->create();
+        $otherAdmin->assignRole('admin');
+
+        $this->actingAs($editor)
+            ->putJson("/api/users/{$admin->id}/roles", [
+                'roles' => ['viewer'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('roles', ['viewer']);
+
+        $this->assertTrue($otherAdmin->fresh()->hasRole('admin'));
+    }
+
     public function test_user_cannot_change_own_roles_or_direct_permissions(): void
     {
         $admin = User::factory()->create();
