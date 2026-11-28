@@ -183,7 +183,6 @@ class SecuritySettingsTest extends TestCase
         $this->assertNotSame($response->json('recovery_codes.0'), $user->fresh()->two_factor_recovery_codes[0]);
     }
 
-
     public function test_totp_code_cannot_be_reused_to_regenerate_recovery_codes(): void
     {
         $user = $this->twoFactorUser();
