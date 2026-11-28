@@ -171,13 +171,13 @@ class NotificationCenterTest extends TestCase
         $user->notify(new SystemActivityNotification(
             'Second', 'Second notification.', 'test', 'System',
         ));
-        $secondId = $user->notifications()->latest()->value('id');
+        $secondId = $user->notifications()->where('data->title', 'Second')->value('id');
 
         $this->actingAs($user)->getJson('/api/notifications/unread-count')
             ->assertOk()
             ->assertJsonPath('unread_count', 2);
 
-        $firstId = $user->notifications()->oldest()->value('id');
+        $firstId = $user->notifications()->where('data->title', 'First')->value('id');
         $this->patchJson("/api/notifications/{$firstId}/read")->assertOk();
 
         $this->getJson('/api/notifications/unread-count')
