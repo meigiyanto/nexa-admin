@@ -60,7 +60,7 @@ export default function NotificationBell({ userId, canManage = false }) {
             };
 
             setItems(current => [item, ...current.filter(existing => existing.id !== item.id)].slice(0, 10));
-            setUnread(current => current + 1);
+            loadCount();
         });
 
         return () => {
@@ -87,7 +87,7 @@ export default function NotificationBell({ userId, canManage = false }) {
         try {
             await axios.patch(`/api/notifications/${id}/read`);
             setItems(current => current.map(item => item.id === id ? { ...item, read_at: new Date().toISOString() } : item));
-            setUnread(current => Math.max(0, current - 1));
+            await loadCount();
         } catch (requestError) {
             setError(requestError.response?.data?.message || 'Unable to update notification.');
         }
@@ -97,7 +97,7 @@ export default function NotificationBell({ userId, canManage = false }) {
         try {
             await axios.post('/api/notifications/read-all');
             setItems(current => current.map(item => ({ ...item, read_at: item.read_at || new Date().toISOString() })));
-            setUnread(0);
+            await loadCount();
         } catch (requestError) {
             setError(requestError.response?.data?.message || 'Unable to update notifications.');
         }
@@ -108,7 +108,7 @@ export default function NotificationBell({ userId, canManage = false }) {
             await axios.delete(`/api/notifications/${id}`);
             const removed = items.find(item => item.id === id);
             setItems(current => current.filter(item => item.id !== id));
-            if (removed && !removed.read_at) setUnread(count => Math.max(0, count - 1));
+            if (removed && !removed.read_at) await loadCount();
         } catch (requestError) {
             setError(requestError.response?.data?.message || 'Unable to delete notification.');
         }
@@ -118,7 +118,7 @@ export default function NotificationBell({ userId, canManage = false }) {
         try {
             await axios.delete('/api/notifications');
             setItems([]);
-            setUnread(0);
+            await loadCount();
         } catch (requestError) {
             setError(requestError.response?.data?.message || 'Unable to clear notifications.');
         }
